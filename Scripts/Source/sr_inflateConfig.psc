@@ -9,6 +9,14 @@ GlobalVariable Property sr_inflatedCommentChance auto
 Globalvariable Property sr_OnEventNoDeflation Auto
 Globalvariable Property sr_OnEventAbsorbSperm Auto
 Globalvariable Property sr_OnEventAbsorbSpermOral Auto
+
+float property SpermRemovalAmountVag auto
+float property SpermRemovalAmountVagDefault = 0.2 auto hidden
+float property SpermRemovalAmountAnal auto 
+float property SpermRemovalAmountAnalDefault = 0.6 auto hidden
+float property SpermRemovalAmountOral auto
+float property SpermRemovalAmountOralDefault = 0.4 auto hidden
+
 GlobalVariable Property sr_Cumvariation Auto
 GlobalVariable Property sr_Cumvariationingredients Auto
 Globalvariable Property sr_followerCommentChance Auto
@@ -74,10 +82,12 @@ int statusMsgChanceOID
 int DeflatechanceOID
 float property Deflatechance = 50.0 Auto hidden
 
+
 bool property followerComments auto hidden
 bool property npcComments auto hidden
 bool property npcCommentsDefault = true autoreadonly hidden
 bool property followerCommentsDefault = true autoreadonly hidden
+bool property FHUMorphSLIFDefault = true autoreadonly hidden
 int npcCommentsOID
 int followerCommentsOID
 
@@ -152,10 +162,20 @@ int FHUSLIFNullOID
 int debugResetOID
 int debugFillVagOID
 int debugFillAnOID
+int FHUMorphDisabledOID
 int FHUMorphStringOID
 int FHUMorphString2OID
 int FHUMorphString3OID
 int FHUMorphString4OID
+int FHUMorphSLIFOID
+int FHUMorphSLIF2OID
+int FHUMorphSLIF3OID
+int FHUMorphSLIF4OID
+
+bool property FHUMorphSLIF auto hidden
+bool property FHUMorphSLIF2 auto hidden
+bool property FHUMorphSLIF3 auto hidden
+bool property FHUMorphSLIF4 auto hidden
 
 int BodyMorphOID
 bool property BodyMorph = true Auto hidden
@@ -201,6 +221,11 @@ int absorbspermOID
 int absorbspermoralOID
 int OnEventSpermPlayerOID
 int OnEventSpermNPCOID
+
+int removespermamountvagOID
+int removespermamountanalOID
+int removespermamountoralOID
+
 GlobalVariable Property sr_TongueEffect Auto
 GlobalVariable Property sr_OnEventSpermPlayer Auto
 GlobalVariable Property sr_OnEventSpermNPC Auto
@@ -308,6 +333,13 @@ Function SetDefaults()
 	sr_ExpelFaliure.setvalue(Deflatechance)
 	VariousCum = VariousCumDefault
 	VariousCumIngredients = VariousCumIngredientsDefault
+	FHUMorphSLIF = FHUMorphSLIFDefault
+	FHUMorphSLIF2 = FHUMorphSLIFDefault
+	FHUMorphSLIF3 = FHUMorphSLIFDefault
+	FHUMorphSLIF4 = FHUMorphSLIFDefault
+	SpermRemovalAmountVag = SpermRemovalAmountVagDefault
+	SpermRemovalAmountAnal = SpermRemovalAmountAnalDefault
+	SpermRemovalAmountOral = SpermRemovalAmountOralDefault
 EndFunction
 
 Event OnGameReload()
@@ -426,10 +458,43 @@ Event OnPageReset(String page)
 		npcCommentsOID = AddToggleOption("$FHU_NPC_COMMENTS", npcComments)
 		followerCommentsOID = AddToggleOption("$FHU_FOLLOWER_COMMENTS", followerComments)
 		SetCursorPosition(1)
-		FHUMorphStringOID = AddInputOption("$FHU_MORPHSTRING", FHUMorphString)
-		FHUMorphString2OID = AddInputOption("$FHU_MORPHSTRING2", FHUMorphString2)
-		FHUMorphString3OID = AddInputOption("$FHU_MORPHSTRING3", FHUMorphString3)
-		FHUMorphString4OID = AddInputOption("$FHU_MORPHSTRING4", FHUMorphString4)
+		int i = StorageUtil.FormListCount(inflater, inflater.INFLATED_ACTORS)
+		if i > 0
+			FHUMorphDisabledOID = AddTextOption("$FHU_MORPH_DISABLED", "")
+			FHUMorphStringOID = AddInputOption("$FHU_MORPHSTRING", FHUMorphString, OPTION_FLAG_DISABLED)
+			FHUMorphSLIFOID = AddToggleOption("$FHU_MORPHSLIF", false, OPTION_FLAG_DISABLED)
+			FHUMorphString2OID = AddInputOption("$FHU_MORPHSTRING2", FHUMorphString2, OPTION_FLAG_DISABLED)
+			FHUMorphSLIF2OID = AddToggleOption("$FHU_MORPHSLIF2", false, OPTION_FLAG_DISABLED)
+			FHUMorphString3OID = AddInputOption("$FHU_MORPHSTRING3", FHUMorphString3, OPTION_FLAG_DISABLED)
+			FHUMorphSLIF3OID = AddToggleOption("$FHU_MORPHSLIF3", false, OPTION_FLAG_DISABLED)
+			FHUMorphString4OID = AddInputOption("$FHU_MORPHSTRING4", FHUMorphString4, OPTION_FLAG_DISABLED)
+			FHUMorphSLIF4OID = AddToggleOption("$FHU_MORPHSLIF4", false, OPTION_FLAG_DISABLED)
+		else
+			FHUMorphStringOID = AddInputOption("$FHU_MORPHSTRING", FHUMorphString)
+			if SLIF_Installed
+				FHUMorphSLIFOID = AddToggleOption("$FHU_MORPHSLIF", FHUMorphSLIF)
+			else
+				FHUMorphSLIFOID = AddToggleOption("$FHU_MORPHSLIF", false, OPTION_FLAG_DISABLED)
+			endif
+			FHUMorphString2OID = AddInputOption("$FHU_MORPHSTRING2", FHUMorphString2)
+			if SLIF_Installed
+				FHUMorphSLIF2OID = AddToggleOption("$FHU_MORPHSLIF2", FHUMorphSLIF2)
+			else
+				FHUMorphSLIF2OID = AddToggleOption("$FHU_MORPHSLIF2", false, OPTION_FLAG_DISABLED)
+			endif
+			FHUMorphString3OID = AddInputOption("$FHU_MORPHSTRING3", FHUMorphString3)
+			if SLIF_Installed
+				FHUMorphSLIF3OID = AddToggleOption("$FHU_MORPHSLIF3", FHUMorphSLIF3)
+			else
+				FHUMorphSLIF3OID = AddToggleOption("$FHU_MORPHSLIF3", false, OPTION_FLAG_DISABLED)
+			endif
+			FHUMorphString4OID = AddInputOption("$FHU_MORPHSTRING4", FHUMorphString4)
+			if SLIF_Installed
+				FHUMorphSLIF4OID = AddToggleOption("$FHU_MORPHSLIF4", FHUMorphSLIF4)
+			else
+				FHUMorphSLIF4OID = AddToggleOption("$FHU_MORPHSLIF4", false, OPTION_FLAG_DISABLED)
+			endif
+		endif
 		FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF)
 		addRaceKeyOID = AddKeyMapOption("$FHU_ADD_RACE", addRaceKey, OPTION_FLAG_WITH_UNMAP)
 		consolePrintOID = AddToggleOption("$FHU_CONSOLE_PRINT", consolePrint)
@@ -454,7 +519,10 @@ Event OnPageReset(String page)
 		
 		autodeflationOID = AddToggleOption("$FHU_AUTO_DEFLATE", sr_OnEventNoDeflation.getvalue())
 		absorbspermOID = AddToggleOption("$FHU_ABSORB_SPERM", sr_OnEventAbsorbSperm.getvalue())
+		removespermamountvagOID = AddSliderOption("$FHU_REMOVESPERMVAG_AMOUNT", SpermRemovalAmountVag, "{1}")
+		removespermamountanalOID = AddSliderOption("$FHU_REMOVESPERMANAL_AMOUNT", SpermRemovalAmountAnal, "{1}")
 		absorbspermoralOID = AddToggleOption("$FHU_ABSORB_SPERMORAL", sr_OnEventAbsorbSpermOral.getvalue())
+		removespermamountoralOID = AddSliderOption("$FHU_REMOVESPERMORAL_AMOUNT", SpermRemovalAmountOral, "{1}")
 		
 		TongueOID = AddToggleOption("$FHU_Tongue_EFFECT", sr_TongueEffect.getvalue())
 		
@@ -548,7 +616,7 @@ Event OnPageReset(String page)
 			iinjector -= 1
 			AddTextOption((sr_InjectorFormlist.getat(iinjector) as actor).GetLeveledActorBase().GetName(), DefineSex(sr_InjectorFormlist.getat(iinjector) as actor))
 		EndWhile
-	ElseIf page == pages[3]
+	ElseIf page == pages[3] ; Human Cum Amounts
 		GoToState("humancumamount")
 		AddHeaderOption("$FHU_RACE_AMOUNTS")
 		int n = StorageUtil.FormListCount(self, RACE_LIST)
@@ -558,7 +626,7 @@ Event OnPageReset(String page)
 			raceOID[i] = AddSliderOption(MiscUtil.GetRaceEditorID(raze), StorageUtil.GetFloatValue(raze, inflater.RACE_CUM_AMOUNT, 0.75), "{2}")
 			i += 1
 		endWhile
-	ElseIf page == pages[4] ; Inflated actors
+	ElseIf page == pages[4] ; Creature Cum Amounts
 		GoToState("creaturecumamount")
 		AddHeaderOption("$FHU_CREATURERACE_AMOUNTS")
 ;		int nc = StorageUtil.FormListCount(self, CREATURERACE_LIST)
@@ -806,6 +874,18 @@ State settings
 			Else
 				sr_followerCommentChance.SetValueInt(0)
 			EndIf
+		ElseIf opt == FHUMorphSLIFOID
+			FHUMorphSLIF = !FHUMorphSLIF
+			SetToggleOptionValue(FHUMorphSLIFOID, FHUMorphSLIF)
+		ElseIf opt == FHUMorphSLIF2OID
+			FHUMorphSLIF2 = !FHUMorphSLIF2
+			SetToggleOptionValue(FHUMorphSLIF2OID, FHUMorphSLIF2)
+		ElseIf opt == FHUMorphSLIF3OID
+			FHUMorphSLIF3 = !FHUMorphSLIF3
+			SetToggleOptionValue(FHUMorphSLIF3OID, FHUMorphSLIF3)
+		ElseIf opt == FHUMorphSLIF4OID
+			FHUMorphSLIF4 = !FHUMorphSLIF4
+			SetToggleOptionValue(FHUMorphSLIF4OID, FHUMorphSLIF4)
 		ElseIf opt == statusMsgOID
 			statusMsg = !statusMsg
 			SetToggleOptionValue(statusMsgOID, statusMsg)
@@ -896,6 +976,14 @@ State settings
 			SetInfoText("$FHU_NPC_COMMENTS_HELP")
 		ElseIf opt == followerCommentsOID
 			SetInfoText("$FHU_FOLLOWER_COMMENTS_HELP")
+		ElseIf opt == FHUMorphSLIFOID
+			SetInfoText("$FHU_MORPH_SLIF_HELP")
+		ElseIf opt == FHUMorphSLIF2OID
+			SetInfoText("$FHU_MORPH_SLIF_HELP")
+		ElseIf opt == FHUMorphSLIF3OID
+			SetInfoText("$FHU_MORPH_SLIF_HELP")
+		ElseIf opt == FHUMorphSLIF4OID
+			SetInfoText("$FHU_MORPH_SLIF_HELP")
 		ElseIf opt == MoanSoundOID
 			SetInfoText("$FHU_STATUS_MOANING_HELP")
 		ElseIf opt == SexlabMoanSoundOID
@@ -1016,6 +1104,21 @@ State events
 			SetSliderDialogRange(1, 100)
 			SetSliderDialogInterval(1)
 			SetSliderDialogDefaultValue(SendeventCriterionDefault)
+		ElseIf opt == removespermamountvagOID
+			SetSliderDialogStartValue(SpermRemovalAmountVag)
+			SetSliderDialogRange(0.1, 10.0)
+			SetSliderDialogInterval(0.1)
+			SetSliderDialogDefaultValue(SpermRemovalAmountVagDefault)
+		ElseIf opt == removespermamountanalOID
+			SetSliderDialogStartValue(SpermRemovalAmountAnal)
+			SetSliderDialogRange(0.1, 10.0)
+			SetSliderDialogInterval(0.1)
+			SetSliderDialogDefaultValue(SpermRemovalAmountAnalDefault)
+		ElseIf opt == removespermamountoralOID
+			SetSliderDialogStartValue(SpermRemovalAmountOral)
+			SetSliderDialogRange(0.1, 10.0)
+			SetSliderDialogInterval(0.1)
+			SetSliderDialogDefaultValue(SpermRemovalAmountOralDefault)
 		Else
 			int i = 0
 			while i < 128 && eventManager.events[i] != none
@@ -1104,7 +1207,15 @@ State events
 			SendeventCriterion = val as int
 			sr_SendingSpermDataCriterion.setvalue(SendeventCriterion)
 			SetSliderOptionValue(opt, val, "{0}%")
-						
+		ElseIf opt == removespermamountvagOID
+			SpermRemovalAmountvag = val
+			SetSliderOptionValue(opt, val, "{1}")
+		ElseIf opt == removespermamountanalOID
+			SpermRemovalAmountanal = val
+			SetSliderOptionValue(opt, val, "{1}")
+		ElseIf opt == removespermamountoralOID
+			SpermRemovalAmountOral = val
+			SetSliderOptionValue(opt, val, "{1}")		
 		Else
 			int i = 0
 			while i < 128 && eventManager.events[i] != none
@@ -1127,6 +1238,12 @@ State events
 			SetInfoText("$FHU_SENDEVENT_CHANCE_HELP")
 		ElseIf opt == eventSendeventCriterionOID
 			SetInfoText("$FHU_SENDEVENT_CRITERION_HELP")
+		ElseIf opt == removespermamountvagOID
+			SetInfoText("$FHU_REMOVESPERMVAG_AMOUNT")
+		ElseIf opt == removespermamountanalOID
+			SetInfoText("$FHU_REMOVESPERMANAL_AMOUNT")
+		ElseIf opt == removespermamountoralOID
+			SetInfoText("$FHU_REMOVESPERMORAL_AMOUNT")
 		ElseIf opt == BeeingFemaleOID
 			SetInfoText("$FHU_BeeingFemaleInfo")
 		ElseIf opt == FertilityOID
@@ -1202,6 +1319,18 @@ Event OnOptionDefault(int opt)
 		followerComments = followerCommentsDefault
 		SetToggleOptionValue(followerCommentsOID, followerComments)
 		sr_followerCommentChance.SetValueInt(26)
+	ElseIf opt == FHUMorphSLIFOID
+		FHUMorphSLIF = FHUMorphSLIFDefault
+		SetToggleOptionValue(FHUMorphSLIFOID, FHUMorphSLIF)
+	ElseIf opt == FHUMorphSLIF2OID
+		FHUMorphSLIF2 = FHUMorphSLIFDefault
+		SetToggleOptionValue(FHUMorphSLIF2OID, FHUMorphSLIF2)
+	ElseIf opt == FHUMorphSLIF3OID
+		FHUMorphSLIF3 = FHUMorphSLIFDefault
+		SetToggleOptionValue(FHUMorphSLIF3OID, FHUMorphSLIF3)
+	ElseIf opt == FHUMorphSLIF4OID
+		FHUMorphSLIF4 = FHUMorphSLIFDefault
+		SetToggleOptionValue(FHUMorphSLIF4OID, FHUMorphSLIF4)
 	ElseIf opt == VariousCumOID
 		VariousCum = true
 		sr_Cumvariation.setvalue(1)

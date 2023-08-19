@@ -819,34 +819,18 @@ Function InflateTo(Actor akActor, int h, float targetLevel = -1.0, float time, S
 	InflateQueued()
 EndFunction
 
-Function InflateDeflate(Actor akActor, Bool Inflation, int h, float targetLevel = -1.0, float time, String callback = "")
+Function InflateDeflate(Actor akActor, Bool Inflation, int poolMask, float targetLevel = -1.0, float time, String callback = "")
 	if targetLevel <= 0.0
 		targetLevel = config.maxInflation
 	endIf
-	int poolMask = 0
-	If h == 1
-		poolMask = Math.LogicalOr(poolMask, VAGINAL)
-	ElseIf h == 2
-		poolMask = Math.LogicalOr(poolMask, ANAL)
-	ElseIf h == 3
-		poolMask = Math.LogicalOr(poolMask, ORAL)
-	EndIf
 	QueueActor(akActor, Inflation, poolMask, targetLevel, time, callback)
 	InflateQueued()
 EndFunction
 
-Function Absorbto(Actor akActor, int h, float targetLevel = -1.0, float time, String callback = "")
+Function Absorbto(Actor akActor, int poolMask, float targetLevel = -1.0, float time, String callback = "")
 	if targetLevel <= 0.0
 		targetLevel = config.maxInflation
 	endIf
-	int poolMask = 0
-	If h == 1
-		poolMask = Math.LogicalOr(poolMask, VAGINAL)
-	ElseIf h == 2
-		poolMask = Math.LogicalOr(poolMask, ANAL)
-	ElseIf h == 3
-		poolMask = Math.LogicalOr(poolMask, ORAL)
-	EndIf
 	QueueAbsorbActor(akActor, false, poolmask, targetLevel, time, callback)
 	AbsorptionQueued()
 EndFunction
@@ -1460,6 +1444,7 @@ Function StopLeakage(Actor akActor)
 	if akActor == player
 		Game.EnablePlayerControls()
 	Else
+		MfgConsoleFunc.ResetPhonemeModifier(akActor);Player expression is controlled here(OnKeyUp)
 		ActorUtil.RemovePackageOverride(akActor, stayStillPackage)
 	EndIf
 
@@ -1768,11 +1753,11 @@ State MonitoringInflation
 								endIf
 							Else
 								if sr_OnEventNoDeflation.getvalue() == 0
-									tid = QueueActor(a, false, VAGINAL, Utility.RandomFloat(0.4, 1.2) * cumMult, defTime)
+									tid = QueueActor(a, false, VAGINAL, Config.SpermRemovalAmountvag, defTime)
 									queued += 1
 								else
 									if sr_OnEventAbsorbSperm.getvalue() == 1
-										tid = QueueAbsorbActor(a, false, VAGINAL, Utility.RandomFloat(0.4, 1.2) * cumMult, defTime)
+										tid = QueueAbsorbActor(a, false, VAGINAL, Config.SpermRemovalAmountvag, defTime)
 										queued += 1
 									endif
 								endif
@@ -1788,11 +1773,11 @@ State MonitoringInflation
 								endIf
 							Else
 								if sr_OnEventNoDeflation.getvalue() == 0
-									tid = QueueActor(a, false, ANAL, Utility.RandomFloat(0.4, 1.2) * cumMult, defTime)
+									tid = QueueActor(a, false, ANAL, Config.SpermRemovalAmountanal, defTime)
 									queued += 1
 								else
 									if sr_OnEventAbsorbSperm.getvalue() == 1
-										tid = QueueAbsorbActor(a, false, ANAL, Utility.RandomFloat(0.4, 1.2) * cumMult, defTime)
+										tid = QueueAbsorbActor(a, false, ANAL, Config.SpermRemovalAmountanal, defTime)
 										queued += 1
 									endif
 								endif
@@ -1801,11 +1786,11 @@ State MonitoringInflation
 						
 						if !deflateVag && !deflateAnal && Utility.RandomInt(0, 99) < GetDeflateChance(a)
 							if sr_OnEventNoDeflation.getvalue() == 0
-								tid = QueueActor(a, false, ORAL, Utility.RandomFloat(0.2, 0.8) * cumMult, defTime)
+								tid = QueueActor(a, false, ORAL, Config.SpermRemovalAmountoral, defTime)
 								queued += 1
 							else
 								if sr_OnEventAbsorbSperm.getvalue() == 1 && sr_OnEventAbsorbSpermOral.getvalue() == 1
-									tid = QueueAbsorbActor(a, false, ORAL, Utility.RandomFloat(0.2, 0.5) * cumMult, defTime)
+									tid = QueueAbsorbActor(a, false, ORAL, Config.SpermRemovalAmountoral, defTime)
 									queued += 1
 								endif
 							endif
@@ -2363,9 +2348,9 @@ EndFunction
 ; 2 - Anal
 ; 3 - Oral
 int Function GetMostRecentInflationType(Actor a)
-	float an = GetFloatValue(a, LAST_TIME_ANAL)
-	float vag = GetFloatValue(a, LAST_TIME_VAG)
-	float ora = GetFloatValue(a, LAST_TIME_ORAL)
+	float an = GetFloatValue(a, CUM_ANAL)
+	float vag = GetFloatValue(a, CUM_VAGINAL)
+	float ora = GetFloatValue(a, CUM_ORAL)
 	
 	If an > 0.0 || vag > 0.0 || ora > 0.0
 		If vag > an
@@ -2545,19 +2530,71 @@ String Property FHU_KEY = "sr_FillHerUp.esp" autoreadonly
 Function SetBellyMorphValue(Actor akActor, float value, string MorphName)
 	If value != 0.0
 		if sr_SLIF.getvalue() == 1
-			SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			if MorphName == InflateMorph && config.FHUMorphSLIF
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+			endif
+			
+			if MorphName == InflateMorph2 && config.FHUMorphSLIF2
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+			endif
+			
+			if MorphName == InflateMorph3 && config.FHUMorphSLIF3
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+			endif
+
+			if MorphName == InflateMorph4 && config.FHUMorphSLIF4
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+			endif
 		else
 			NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
 		endif
 	Else
 		if sr_SLIF.getvalue() == 1
-			SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			if MorphName == InflateMorph && config.FHUMorphSLIF
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
+			endif
+			
+			if MorphName == InflateMorph2 && config.FHUMorphSLIF2
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
+			endif
+			
+			if MorphName == InflateMorph3 && config.FHUMorphSLIF3
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
+			endif
+			
+			if MorphName == InflateMorph4 && config.FHUMorphSLIF4
+				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
+			else
+				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
+			endif
+			
 		else
 			NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
 			NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
 		endif
 	EndIf	
-	NiOverride.UpdateModelWeight(akActor)
+	NiOverride.UpdateModelWeight(akActor);Pregnancy Swapper
+	int eid = ModEvent.Create("PNSUpdateRequest")
+	ModEvent.PushForm(eid, akActor)
+	ModEvent.Send(eid)
 EndFunction
 
 Function SLIF_morph(Actor akActor, String MorphName, float value)

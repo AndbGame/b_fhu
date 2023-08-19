@@ -420,7 +420,6 @@ Function Deflate()
 	log("cumAmount: " + cumAmount)
 	log("DefAmount: " + deflationAmount + ", total time: " + tme + ", steps: " + steps + ", step: " + step)
 	
-	;inflater.StartLeakage(akActor, isAnal, animate)
 	inflater.StartLeakage(akActor, Cumtype, animate)
 	If akActor.Is3DLoaded()
 		inflater.Moan(akActor)
@@ -434,7 +433,6 @@ Function Deflate()
 					if bAnimController
 						bAnimController = false
 						if config.BodyMorph && (isAnal || isVaginal)
-							;inflater.SetBellyMorphValue(akActor, currentInflation, inflater.PregnancyBelly)
 							inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph)
 							if inflater.InflateMorph2 != ""
 								inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph2)

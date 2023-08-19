@@ -134,6 +134,7 @@ EndEvent
 Event OnKeyUp(int kc, float time)
 	if kc == config.defkey
 		keydown = false
+		MfgConsoleFunc.ResetPhonemeModifier(GetActorReference())
 	endIf
 EndEvent
 
