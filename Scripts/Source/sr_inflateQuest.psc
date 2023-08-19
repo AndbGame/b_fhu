@@ -2146,7 +2146,9 @@ Function StripCover(Actor akActor, bool isAnal)
 EndFunction
 
 Function UnstripActor(Actor akActor)
-	EquipArmor(akActor)
+	If config.strip
+		EquipArmor(akActor)
+	endIf
 EndFunction
 
 Function UnequipArmor(Actor target)
