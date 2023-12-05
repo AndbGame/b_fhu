@@ -391,7 +391,7 @@ Event OrgasmSeparate(Form ActorRef, Int Thread)
 			int actorGender = sexlab.GetGender(actors[i])
 		;	log(anim.name + " - cumSpot for position " + i + ": " + cumSpot)
 			If akActor != actors[i]
-				If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1 && cumSpot != 2
+				If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1; && cumSpot != 2
 					; only inflate if the actor is female (or male pretending to be female!) and the animation position has cum effect set for something else than oral only
 					If actors[i] == player && sr_CumEffectsEnabled.GetValueInt() > 0
 						RegisterForModEvent("fhu.playerInflated", "PlayerInflationDone")
@@ -447,7 +447,7 @@ Event Orgasm(int thread, bool hasPlayer)
 			int actorGender = sexlab.GetGender(actors[i])
 		;	log(anim.name + " - cumSpot for position " + i + ": " + cumSpot)
 			;If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1 && cumSpot != 2
-			If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1
+			If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) ;&& cumSpot != -1
 				; only inflate if the actor is female (or male pretending to be female!) and the animation position has cum effect set for something else than oral only
 				If actors[i] == player && sr_CumEffectsEnabled.GetValueInt() > 0
 					RegisterForModEvent("fhu.playerInflated", "PlayerInflationDone")
