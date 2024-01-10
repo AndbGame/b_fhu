@@ -78,6 +78,9 @@ Spell Property encumber25 Auto
 
 SexLabFramework Property sexlab auto
 Faction Property slAnimatingFaction auto
+Faction Property zadAnimatingFaction auto 
+Faction Property DefeatFaction auto 
+Faction Property UDMinigameFaction auto 
 
 Package Property stayStillPackage auto
 
@@ -307,6 +310,15 @@ Function VersionUpdate()
 		zad_DeviousPlugVaginal	= Game.GetFormFromFile(0x0001DD7C, "Devious Devices - Assets.esm") as Keyword
 		zad_DeviousBelt			= Game.GetFormFromFile(0x00003330, "Devious Devices - Assets.esm") as Keyword
 		zad_PermitAnal			= Game.GetFormFromFile(0x0000FACA, "Devious Devices - Assets.esm") as Keyword
+	EndIf
+	If Game.GetModByName("Devious Devices - Integration.esm") != 255
+		zadAnimatingFaction		= Game.GetFormFromFile(0x00029567, "Devious Devices - Integration.esm") as Faction
+	EndIf
+	If Game.GetModByName("SexLabDefeat.esp") != 255
+		DefeatFaction			= Game.GetFormFromFile(0x00001D92, "SexLabDefeat.esp") as Faction
+	EndIf
+	If Game.GetModByName("UnforgivingDevices.esp") != 255
+		UDMinigameFaction		= Game.GetFormFromFile(0x00150DA3, "UnforgivingDevices.esp") as Faction
 	EndIf
 	SetIntValue(Player, "CI_CumInflation_ON", 1)
 	eventManager.StartEvents()
@@ -1626,7 +1638,7 @@ int i
 		while i > 0
 			i -= 1
 			Male = sr_InjectorFormlist.getat(i) as actor
-			if (Male.GetBaseObject() as Actorbase).getsex() == 0
+			if Male && (Male.GetBaseObject() as Actorbase).getsex() == 0
 				FertilityEventGo("FertilityModeAddSperm", a as form, Male.Getleveledactorbase().getname(), Male as form)
 				If fullness > sr_SendingSpermDataCriterion.getvalue() as int
 					FertilityEventGo("FertilityModeImpregnate", a as form, Male.Getleveledactorbase().getname(), None)
@@ -1639,7 +1651,7 @@ int i
 
 		while i > 0
 			i -= 1
-			if (injector[i].GetActorBase()).getsex() == 0
+			if injector[i] && (injector[i].GetActorBase()).getsex() == 0
 				Male = injector[i]
 				FertilityEventGo("FertilityModeAddSperm", a as form, Male.Getleveledactorbase().getname(), Male as form)
 				If fullness > sr_SendingSpermDataCriterion.getvalue() as int
@@ -1660,7 +1672,7 @@ int i
 		while i > 0
 			i -= 1
 			Male = sr_InjectorFormlist.getat(i) as actor
-			if (Male.GetBaseObject() as Actorbase).getsex() == 0
+			if Male && (Male.GetBaseObject() as Actorbase).getsex() == 0
 				Male.SendModEvent("BeeingFemale", "AddSperm", a.GetFormID())
 				Utility.wait(1.0)
 			endif
@@ -1670,7 +1682,7 @@ int i
 
 		while i > 0
 			i -= 1
-			if ((injector[i].GetActorBase()).getsex() == 0) && (Player != injector[i])
+			if (injector[i] && (injector[i].GetActorBase()).getsex() == 0) && (Player != injector[i])
 				;debug.notification("yes male")
 				Male = injector[i]
 				Male.SendModEvent("BeeingFemale", "AddSperm", a.GetFormID())
@@ -1710,7 +1722,7 @@ State MonitoringInflation
 				
 					n -= 1
 					Actor a = FormListGet(self, INFLATED_ACTORS, n) as Actor
-					if a && !a.IsDead() && !a.IsInCombat() && a.GetCurrentScene() == none && !a.IsInFaction(slAnimatingFaction)
+					if a && !a.IsDead() && !a.IsInCombat() && a.GetCurrentScene() == none && !isAnimating(a)
 						float lastVagTime = GetFloatValue(a, LAST_TIME_VAG) 
 						float lastAnalTime = GetFloatValue(a, LAST_TIME_ANAL)
 						float lastoralTime = GetFloatValue(a, LAST_TIME_ORAL)
@@ -2603,4 +2615,8 @@ EndFunction
 
 Function SLIF_unregisterMorph(Actor akActor, String MorphName)
 ;Null
+EndFunction
+
+bool Function isAnimating(Actor akActor)
+	return akActor.IsInFaction(slAnimatingFaction) || akActor.IsInFaction(zadAnimatingFaction) || akActor.IsInFaction(DefeatFaction) || akActor.IsInFaction(UDMinigameFaction)
 EndFunction
