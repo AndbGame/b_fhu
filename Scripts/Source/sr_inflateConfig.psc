@@ -416,7 +416,7 @@ Event OnVersionUpdate(int newVersion)
 		EndIf
 		Debug.Notification("Fill Her Up " + inflater.GetVersionString() + " initialized.")
 	EndIf
-	debug.messagebox("Fill Her Up Update")
+	;debug.messagebox("Fill Her Up Update")
 EndEvent
 
 

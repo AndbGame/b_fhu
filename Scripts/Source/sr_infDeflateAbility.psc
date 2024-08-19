@@ -138,6 +138,25 @@ Event OnKeyUp(int kc, float time)
 	endIf
 EndEvent
 
+Function doPushDeflate(String pool, Actor p, float currentInf)
+	if config.BodyMorph && (pool == inflater.CUM_VAGINAL || pool == inflater.CUM_ANAL)
+		;inflater.SetBellyMorphValue(p, currentInf, "PregnancyBelly")
+		inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph)
+		if inflater.InflateMorph2 != ""
+			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph2)
+		endIf
+		if inflater.InflateMorph3 != ""
+			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph3)
+		endif
+	elseif config.BodyMorph && pool == inflater.CUM_ORAL
+		if inflater.InflateMorph4 != ""
+			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph4)
+		endif
+	else
+		inflater.SetNodeScale(p, "NPC Belly", currentInf)
+	endif
+EndFunction
+
 Function doPush(int type)
 	Actor p = GetActorReference()
 	Game.DisablePlayerControls()
@@ -169,28 +188,18 @@ Function doPush(int type)
 	float originalCum = cum
 	float originalInf = currentInf
 	bAnimController = true
+	int tick = 10
 ;	log("Starting: inf: " + currentInf +", cum: " +cum + ", pool: " + pool)
 	While keydown && p.GetActorValuePercentage("Stamina") > 0.02 && cum > 0.02
 		currentInf -= 0.05*(1.0/inflater.config.animMult)
 		cum -= 0.05*(1.0/inflater.config.animMult)
+		tick -= 1
 		if bAnimController;Prevents serious FPS drop due to heavy code stacks.
 			bAnimController = false
-			if config.BodyMorph && (pool == inflater.CUM_VAGINAL || pool == inflater.CUM_ANAL)
-				;inflater.SetBellyMorphValue(p, currentInf, "PregnancyBelly")
-				inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph)
-				if inflater.InflateMorph2 != ""
-					inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph2)
-				endIf
-				if inflater.InflateMorph3 != ""
-					inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph3)
-				endif
-			elseif config.BodyMorph && pool == inflater.CUM_ORAL
-				if inflater.InflateMorph4 != ""
-					inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph4)
-				endif
-			else
-				inflater.SetNodeScale(p, "NPC Belly", currentInf)
-			endif
+			if(tick <= 0)
+				doPushDeflate(pool, p, currentInf)
+				tick = 10
+			EndIf
 		else
 			bAnimController = true
 		endif
@@ -198,6 +207,8 @@ Function doPush(int type)
 		p.DamageActorValue("Stamina", dps)
 		Utility.wait(0.3)
 	endWhile
+
+	doPushDeflate(pool, p, currentInf)
 
 	If cum < 0.02
 		cum = 0.0
