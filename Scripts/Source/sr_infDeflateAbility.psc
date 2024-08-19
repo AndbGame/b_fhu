@@ -187,28 +187,25 @@ Function doPush(int type)
 	float cum = StorageUtil.GetFloatValue(p, pool)
 	float originalCum = cum
 	float originalInf = currentInf
-	bAnimController = true
-	int tick = 10
+	int deflationTick = 5
+	int tick = deflationTick
 ;	log("Starting: inf: " + currentInf +", cum: " +cum + ", pool: " + pool)
 	While keydown && p.GetActorValuePercentage("Stamina") > 0.02 && cum > 0.02
+		float deflateAmount = 0.05 * (1.0 / inflater.config.animMult)
+		If deflateAmount > cum
+			deflateAmount = cum
+		EndIf
 		currentInf -= 0.05*(1.0/inflater.config.animMult)
 		cum -= 0.05*(1.0/inflater.config.animMult)
 		tick -= 1
-		if bAnimController;Prevents serious FPS drop due to heavy code stacks.
-			bAnimController = false
-			if(tick <= 0)
-				doPushDeflate(pool, p, currentInf)
-				tick = 10
-			EndIf
-		else
-			bAnimController = true
-		endif
+		if(tick <= 0) ;Prevents serious FPS drop due to heavy code stacks.
+			doPushDeflate(pool, p, currentInf)
+			tick = deflationTick
+		EndIf
 	;	log("current: inf: " + currentInf +", cum: " +cum)
 		p.DamageActorValue("Stamina", dps)
 		Utility.wait(0.3)
 	endWhile
-
-	doPushDeflate(pool, p, currentInf)
 
 	If cum < 0.02
 		cum = 0.0
@@ -228,27 +225,12 @@ Function doPush(int type)
 	
 ;	log("Final cum: "+cum+", cum diff from original: " + diff + ", final inflation: " + currentInf)
 	
-	If currentInf < 1.0
+	If currentInf <= 0.0
 		currentInf = 0.0
 		StorageUtil.FormListRemove(inflater, inflater.INFLATED_ACTORS, p, true)
 		inflater.sr_plugged.SetValueInt(0)
 	EndIf
-	if config.BodyMorph && (pool == inflater.CUM_VAGINAL || pool == inflater.CUM_ANAL)
-		;inflater.SetBellyMorphValue(p, currentInf, "PregnancyBelly")
-		inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph)
-		if inflater.InflateMorph2 != ""
-			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph2)
-		endIf
-		if inflater.InflateMorph3 != ""
-			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph3)
-		endif
-	elseif config.BodyMorph && pool == inflater.CUM_ORAL
-		if inflater.InflateMorph4 != ""
-			inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph4)
-		endif
-	else
-		inflater.SetNodeScale(p, "NPC Belly", currentInf)
-	endif
+	doPushDeflate(pool, p, currentInf)
 	if type < 3
 		StorageUtil.SetFloatValue(p, inflater.INFLATION_AMOUNT, currentInf)
 	endif
@@ -301,6 +283,14 @@ Function doPush(int type)
 			p.additem(FHUVomitCum, cumcompare)
 		endif
 	endif
+
+	if StorageUtil.GetFloatValue(p, inflater.CUM_ANAL) == 0.0 && StorageUtil.GetFloatValue(p, inflater.CUM_VAGINAL) == 0.0 && StorageUtil.GetFloatValue(p, inflater.CUM_ORAL) == 0.0
+		StorageUtil.FormListRemove(inflater, inflater.INFLATED_ACTORS, p, true)
+		inflater.RemoveFaction(p)
+		inflater.UnencumberActor(p)
+		inflater.sr_plugged.setValueInt(0)
+	endif
+	
 EndFunction
 
 Function log(String msg)

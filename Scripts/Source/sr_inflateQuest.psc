@@ -811,7 +811,7 @@ float CreatureCumAmount = 0
 Return CreatureCumAmount
 EndFunction
 
-Function InflateTo(Actor akActor, int h, float targetLevel = -1.0, float time, String callback = "")
+Function InflateTo(Actor akActor, int h, float targetLevel = -1.0, float time = 2.0, String callback = "")
 	if targetLevel <= 0.0
 		targetLevel = config.maxInflation
 	endIf
@@ -1103,6 +1103,7 @@ cumtypei = cumtype
 					akActor.equipItem(sr_AnalLeak, abSilent=true)
 				elseif CumType == 3
 					akActor.addItem(sr_OralLeak, 1, true)
+					Utility.Wait(0.5)
 					akActor.equipItem(sr_OralLeak, abSilent=true)
 				EndIf
 				SetIntValue(akActor, ANIMATING, 2)

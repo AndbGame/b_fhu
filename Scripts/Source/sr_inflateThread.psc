@@ -365,14 +365,17 @@ Function Deflate()
 	Actor akActor = GetActorReference()
 	log("Deflating")
 	int Cumtype
-	isAnal = !isVaginal ; A bit of hack to have the same parameter on both inflate and deflate despite different usage
+	If !isOral
+		isAnal = !isVaginal ; A bit of hack to have the same parameter on both inflate and deflate despite different usage
+	EndIf
 	
 	float currentInflation
 	
 	float vagCum = GetFloatValue(akActor, inflater.CUM_VAGINAL)
 	float analCum = GetFloatValue(akActor, inflater.CUM_ANAL)
 	float oralCum = GetFloatValue(akActor, inflater.CUM_ORAL)
-	bAnimController = true
+	int deflationTick = 10
+	int tick = deflationTick
 	; Starting values for the callback, current values can be fetched directly
 	float startVag = vagCum
 	float startAn = analCum
@@ -400,6 +403,10 @@ Function Deflate()
 
 	float deflateTarget = totalInf - cumAmount
 	log("deflateTarget = "+vagCum+" + "+analCum+" - "+cumAmount)
+
+	if deflateTarget < 0.0
+		deflateTarget = 0.0
+	endif
 	
 	If totalInf > maxInflation && deflateTarget < maxInflation
 		log("Combined total higher than max and target lower than max! total: "+totalInf+", target: "+deflateTarget+", max: "+maxInflation, 1)
@@ -430,8 +437,8 @@ Function Deflate()
 			If akActor.Is3DLoaded()
 				while currentInflation > deflateTarget
 					currentInflation -= step
-					if bAnimController
-						bAnimController = false
+					tick -= 1
+					if(tick <= 0)
 						if config.BodyMorph && (isAnal || isVaginal)
 							inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph)
 							if inflater.InflateMorph2 != ""
@@ -447,8 +454,7 @@ Function Deflate()
 						Else
 							inflater.SetNodeScale(akActor, inflater.BELLY_NODE, currentInflation)
 						Endif
-					else
-						bAnimController = true
+						tick = deflationTick
 					endif
 					Utility.Wait(0.2)
 				endWhile
@@ -490,27 +496,33 @@ Function Deflate()
 		if analCum < 0.1
 			analCum = 0.0
 			UnsetFloatValue(akActor, inflater.LAST_TIME_ANAL)
+			UnsetFloatValue(akActor, inflater.CUM_ANAL)
+		Else
+			SetFloatValue(akActor, inflater.CUM_ANAL, analCum)
 		EndIf
-		SetFloatValue(akActor, inflater.CUM_ANAL, analCum)
 	Elseif isVaginal
 		vagCum -= cumAmount
 		if vagCum < 0.1
 			vagCum = 0.0
 			UnsetFloatValue(akActor, inflater.LAST_TIME_VAG)
+			UnsetFloatValue(akActor, inflater.CUM_VAGINAL)
+		Else
+			SetFloatValue(akActor, inflater.CUM_VAGINAL, vagCum)
 		EndIf
-		SetFloatValue(akActor, inflater.CUM_VAGINAL, vagCum)
 	else
 		oralCum -= cumAmount
 		if oralCum < 0.1
 			oralCum = 0.0
 			UnsetFloatValue(akActor, inflater.LAST_TIME_ORAL)
+			UnsetFloatValue(akActor, inflater.CUM_ORAL)
+		Else
+			SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 		EndIf
-		SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 	EndIf
-	log("Cum amounts after deflation, v: "+ vagCum +", a: "+ analCum +", t: "+ (analCum+vagCum))
+	log("Cum amounts after deflation, v: "+ vagCum +", a: "+ analCum +", t: "+ (analCum+vagCum) + ", o: " + oralCum)
 	
 	if Cumtype < 3
-		if ( analCum <= 0.0 && vagCum <= 0.0 ) || deflateTarget <= 1.0
+		if ( analCum <= 0.0 && vagCum <= 0.0 )
 			If(inflater.config.bellyScale)
 				if config.BodyMorph
 					;inflater.SetBellyMorphValue(akActor, 0.0, inflater.PregnancyBelly)
@@ -525,23 +537,13 @@ Function Deflate()
 					inflater.SetNodeScale(akActor, inflater.BELLY_NODE, 0.0)
 				Endif
 			EndIf
-			SetFloatValue(akActor, inflater.CUM_ANAL, analCum)
-			;SetFloatValue(akActor, inflater.CUM_VAGINAL, analCum)
-			SetFloatValue(akActor, inflater.CUM_VAGINAL, vagCum)
-			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, 0.0)
-			log("Deflated to removal of NIO scale")
-			FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
-			inflater.RemoveFaction(akActor)
-			inflater.UnencumberActor(akActor)
-			If akActor == inflater.player
-				inflater.sr_plugged.setValueInt(0)
-			EndIf
+			UnsetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		else
 			inflater.UpdateFaction(akActor)
 			inflater.EncumberActor(akActor)
 		endif
 	elseif Cumtype == 3
-		if OralCum <= 0.0 || deflateTarget <= 0.5
+		if OralCum <= 0.0
 			If(inflater.config.bellyScale)
 				if config.BodyMorph
 					if inflater.InflateMorph4 != ""
@@ -549,10 +551,18 @@ Function Deflate()
 					endIf
 				endif
 			endif
-			SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 		Else
 			inflater.UpdateOralFaction(akActor)
 		EndIf
+	endif
+	
+	if analCum == 0.0 && vagCum == 0.0 && OralCum == 0.0
+		FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
+		inflater.RemoveFaction(akActor)
+		inflater.UnencumberActor(akActor)
+		if akActor == inflater.player
+			inflater.sr_plugged.setValueInt(0)
+		endif
 	endif
 
 	If cb != ""
@@ -586,14 +596,13 @@ Function Absorb()
 	Actor akActor = GetActorReference()
 	log("Absorbing")
 	int Cumtype
-	isAnal = !isVaginal
-	
 	float currentInflation
 
 	float vagCum = GetFloatValue(akActor, inflater.CUM_VAGINAL)
 	float analCum = GetFloatValue(akActor, inflater.CUM_ANAL)
 	float oralCum = GetFloatValue(akActor, inflater.CUM_ORAL)
-	bAnimController = true
+	int deflationTick = 5
+	int tick = deflationTick
 	; Starting values for the callback, current values can be fetched directly
 	float startVag = vagCum
 	float startAn = analCum
@@ -629,7 +638,9 @@ Function Absorb()
 
 	float deflateTarget = totalInf - cumAmount
 	log("deflateTarget = "+vagCum+" + "+analCum+" - "+cumAmount)
-	
+	if deflateTarget < 0.0
+		deflateTarget = 0.0
+	endif
 	If totalInf > maxInflation && deflateTarget < maxInflation
 		log("Combined total higher than max and target lower than max! total: "+totalInf+", target: "+deflateTarget+", max: "+maxInflation, 1)
 ;		deflateTarget = totalInf - cumAmount;Duplicate
@@ -659,8 +670,8 @@ Function Absorb()
 			If akActor.Is3DLoaded()
 				while currentInflation > deflateTarget
 					currentInflation -= step
-					if bAnimController
-						bAnimController = false
+					tick -= 1
+					if(tick <= 0)
 						if config.BodyMorph && (isAnal || isVaginal)
 							;inflater.SetBellyMorphValue(akActor, currentInflation, inflater.PregnancyBelly)
 							inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph)
@@ -677,8 +688,7 @@ Function Absorb()
 						Else
 							inflater.SetNodeScale(akActor, inflater.BELLY_NODE, currentInflation)
 						Endif
-					else
-						bAnimController = true
+						tick = deflationTick
 					endif
 					Utility.Wait(0.2)
 				endWhile
@@ -738,12 +748,14 @@ Function Absorb()
 		if oralCum < 0.1
 			oralCum = 0.0
 			UnsetFloatValue(akActor, inflater.LAST_TIME_ORAL)
+			UnsetFloatValue(akActor, inflater.CUM_ORAL)
+		Else
+			SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 		EndIf
-		SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 	EndIf
-	log("Cum amounts after deflation, v: "+ vagCum +", a: "+ analCum +", t: "+ (analCum+vagCum))
+	log("Cum amounts after absorb, v: "+ vagCum +", a: "+ analCum +", t: "+ (analCum+vagCum) + ", o: " + oralCum)
 	if Cumtype < 3
-		if ( analCum <= 0.0 && vagCum <= 0.0 ) || deflateTarget <= 1.0
+		if ( analCum <= 0.0 && vagCum <= 0.0 )
 			If(inflater.config.bellyScale)
 				if config.BodyMorph
 					;inflater.SetBellyMorphValue(akActor, 0.0, inflater.PregnancyBelly)
@@ -758,22 +770,13 @@ Function Absorb()
 					inflater.SetNodeScale(akActor, inflater.BELLY_NODE, 0.0)
 				Endif
 			EndIf
-			SetFloatValue(akActor, inflater.CUM_ANAL, 0.0)
-			SetFloatValue(akActor, inflater.CUM_VAGINAL, 0.0)
-			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, 0.0)
-			log("Deflated to removal of NIO scale")
-			FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
-			inflater.RemoveFaction(akActor)
-			inflater.UnencumberActor(akActor)
-			If akActor == inflater.player
-				inflater.sr_plugged.setValueInt(0)
-			EndIf
+			UnsetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		else
 			inflater.UpdateFaction(akActor)
 			inflater.EncumberActor(akActor)
 		endif
 	elseif Cumtype == 3
-		if OralCum <= 0.0 || deflateTarget <= 0.5
+		if OralCum <= 0.0
 			If(inflater.config.bellyScale)
 				if config.BodyMorph
 					if inflater.InflateMorph4 != ""
@@ -781,10 +784,18 @@ Function Absorb()
 					endIf
 				endif
 			endif
-			SetFloatValue(akActor, inflater.CUM_ORAL, 0.0)
 		Else
 			inflater.UpdateOralFaction(akActor)
 		EndIf
+	endif
+
+	if analCum == 0.0 && vagCum == 0.0 && OralCum == 0.0
+		FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
+		inflater.RemoveFaction(akActor)
+		inflater.UnencumberActor(akActor)
+		if akActor == inflater.player
+			inflater.sr_plugged.setValueInt(0)
+		endif
 	endif
 
 	If cb != ""

@@ -787,8 +787,8 @@ State settings
 			SetToggleOptionValue(loggingOID, logging)
 			inflater.log("Logging set to: " + logging)
 		ElseIf opt == FHUSLIFOID
-			FHUSLIF != FHUSLIF
-			sr_SLIF.setvalue(FHUSLIF as int)
+			FHUSLIF = !FHUSLIF
+			sr_SLIF.SetValueInt(FHUSLIF as int)
 			SetToggleOptionValue(FHUSLIFOID, FHUSLIF)
 		ElseIf opt == resetOID
 			if !resetting
