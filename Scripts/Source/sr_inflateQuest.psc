@@ -95,8 +95,8 @@ ImpactDataSet Property SFU_CumImpactDataSet Auto
 ImpactDataSet Property SFU_CumMidImpactDataSet Auto
 ImpactDataSet Property SFU_CumHighImpactDataSet Auto
 
-Actor[] Property Injector Auto
-Actor[] Property InjectorPlayer Auto
+Actor[] Property Injector Auto ; deprecated
+Actor[] Property InjectorPlayer Auto ; deprecated
 formlist Property sr_InjectorFormlist auto
 Actor Property Player Auto
 Actor DeflateActor
@@ -347,18 +347,33 @@ event FHUSexlabEnd(int tid, bool HasPlayer)
 	If anim.hasTag("Vaginal")
 		if HasPlayer
 			int i = actors.length
-			InjectorPlayer = actors
 			while i > 1
 				i -= 1
 				sr_InjectorFormlist.addform(actors[i])
 			endwhile
 ;			debug.notification(tid)
-;			Debug.Notification(victim.GetLeveledActorBase().GetName() + " took sperm from " + injectorPlayer[0].GetLeveledActorBase().GetName())
 		else
-			injector[0] = actors[1]
-			injector[1] = actors[2]
-			injector[2] = actors[3]
-			injector[3] = actors[4]
+			Actor[] injectorArray = new Actor[4]
+			int i = 0
+			while i < 4
+				if i < (actors.length - 1)
+					injectorArray[i] = actors[i + 1]
+				else
+					Actor last = FormListShift(Victim, "sr.inflater.injector") as Actor
+					if last
+						injectorArray[i] = last
+					endif
+				endif
+				i += 1
+			endwhile
+			FormListClear(Victim, "sr.inflater.injector")
+			i = 0
+			while i < 4
+				If injectorArray[i]
+					FormListAdd(Victim, "sr.inflater.injector", injectorArray[i])
+				EndIf
+				i += 1
+			endwhile
 			Debug.Notification(victim.GetLeveledActorBase().GetName() + " (NPC) took sperm from " + Male.GetLeveledActorBase().GetName())
 		endif
 	else
@@ -848,6 +863,9 @@ Function Absorbto(Actor akActor, int poolMask, float targetLevel = -1.0, float t
 EndFunction
 
 Function CheckingLastActor(actor akactor)
+	If akactor != player
+		; TODO
+	EndIf
 form Male
 race malerace
 float chaurusnum = 0
@@ -859,18 +877,14 @@ float Spriggannum = 0
 float StoneAtronachnum = 0
 float beastcumnum = 0
 float RaceAmount
-;int i = injectorPlayer.length
 int actori = -1
 int i = sr_InjectorFormlist.getsize()
 	while i > 0
 		i -= 1
 		Male = sr_InjectorFormlist.getat(i)
-		actori = GetCreatureRaceint(Male as actor)
-		;malerace = (injectorPlayer[i].GetActorBase()).getrace()
-		;Debug.Notification(injectorPlayer[i].GetLeveledActorBase().GetName() + " sperm " + i)
 		
-		;if injectorPlayer[i]
 		if Male
+			actori = GetCreatureRaceint(Male as actor)
             if actori == -1
 				humannum += 0.5
 			elseif actori == 0
@@ -1648,12 +1662,12 @@ int i
 			endif
 		endwhile
 	else
-		i = injector.length
-
+		i = FormListCount(a, "sr.inflater.injector")
 		while i > 0
 			i -= 1
-			if injector[i] && (injector[i].GetActorBase()).getsex() == 0
-				Male = injector[i]
+			Male = FormListGet(a, "sr.inflater.injector", i) as Actor
+			if Male && (Male.GetActorBase()).getsex() == 0
+				log("FertilityModeAddSperm to " + a + " from " + Male)
 				FertilityEventGo("FertilityModeAddSperm", a as form, Male.Getleveledactorbase().getname(), Male as form)
 				If fullness > sr_SendingSpermDataCriterion.getvalue() as int
 					FertilityEventGo("FertilityModeImpregnate", a as form, Male.Getleveledactorbase().getname(), None)
@@ -1668,7 +1682,6 @@ int i
 	if sr_BeeingFemale.getvalue() == 1
 	
 	if a == Player
-		;i = injectorPlayer.length
 		i = sr_InjectorFormlist.getsize()
 		while i > 0
 			i -= 1
@@ -1679,13 +1692,13 @@ int i
 			endif
 		endwhile
 	else
-		i = injector.length
-
+		i = FormListCount(a, "sr.inflater.injector")
 		while i > 0
 			i -= 1
-			if (injector[i] && (injector[i].GetActorBase()).getsex() == 0) && (Player != injector[i])
+			Male = FormListGet(a, "sr.inflater.injector", i) as Actor
+			if (Male && (Male.GetActorBase()).getsex() == 0) && (Player != Male)
 				;debug.notification("yes male")
-				Male = injector[i]
+				log("BeeingFemale AddSperm to " + a + " from " + Male)
 				Male.SendModEvent("BeeingFemale", "AddSperm", a.GetFormID())
 				Utility.wait(1.0)
 			else
@@ -1818,6 +1831,7 @@ State MonitoringInflation
 					ElseIf a == none || a.isDead() || a.isdisabled()
 						warn("Found dead or none actor in inflated actor list, removing.")
 						FormListRemoveAt(self, INFLATED_ACTORS, n)
+						FormListClear(a, "sr.inflater.injector")
 					;	FormListRemove(self, INFLATED_ACTORS, FormListGet(self, INFLATED_ACTORS, n), true)
 					EndIf
 				EndWhile
@@ -1885,6 +1899,7 @@ Function ResetActors(bool force = false)
 		Else
 			RemoveNodeScale(a, BELLY_NODE)
 		Endif
+		FormListClear(a, "sr.inflater.injector")
 		
 		UnsetFloatValue(a, INFLATION_AMOUNT)
 		UnsetFloatValue(a, CUM_ANAL)
@@ -1964,6 +1979,7 @@ Function ResetActor(Actor a)
 	UnencumberActor(a)
 	RemoveFaction(a)
 	FormListRemove(self, INFLATED_ACTORS, a, true)
+	FormListClear(a, "sr.inflater.injector")
 	If a == player
 		SendPlayerCumUpdate(0.0, true)
 		SendPlayerCumUpdate(0.0, false)
@@ -2130,6 +2146,7 @@ Function StripActor(Actor akActor)
 	endIf
 EndFunction
 
+; Unused
 Function StripCover(Actor akActor, bool isAnal)
 	If config.strip
 		int slot = 0x1000000
@@ -2150,7 +2167,8 @@ Function UnstripActor(Actor akActor)
 EndFunction
 
 Function UnequipArmor(Actor target)
-wornforms = new Armor[32]
+;wornforms = new Armor[32]
+FormListClear(target, "sr.inflater.unequipped")
 
 ;int index = wornforms.length
 int index = 0
@@ -2166,8 +2184,9 @@ int thisSlot = 0x01
 		curr_armor = target.GetWornForm(thisSlot) as Armor
 		if curr_armor
 			if (!SexLabUtil.HasKeywordSub(curr_armor, "NoStrip"))
-				wornforms[index] = curr_armor
+				;wornforms[index] = curr_armor
 				Target.UnequipItem(curr_armor, false, true)
+				FormListAdd(target, "sr.inflater.unequipped", curr_armor)
 				index += 1
 			EndIf
 		endif
@@ -2179,14 +2198,26 @@ EndFunction
 
 Function EquipArmor(Actor target)
 
-int index = wornforms.length
-
-	while index > 0
-		index -= 1
-		if wornforms[index]
-			Target.equipItem(wornforms[index], false, true)
-		EndIf
-	endWhile
+	int i = FormListCount(target, "sr.inflater.unequipped")
+	while(i > 0)
+		i -= 1
+		Armor curr_armor = FormListGet(target, "sr.inflater.unequipped", i) as Armor
+		if(curr_armor && !target.IsEquipped(curr_armor) && !target.GetWornForm(curr_armor.GetSlotMask()))
+			bool inInventory = false
+			Int iIndex = target.GetNumItems()
+			While iIndex > 0
+				iIndex -= 1
+				If target.GetNthForm(iIndex) == curr_armor
+					inInventory = true
+				EndIf
+			EndWhile
+			If inInventory
+				Target.equipItem(curr_armor, false, true)
+			EndIf
+		endif
+		FormListRemoveAt(target, "sr.inflater.unequipped", i)
+	endwhile
+	FormListClear(target, "sr.inflater.unequipped")
 	
 EndFunction
 

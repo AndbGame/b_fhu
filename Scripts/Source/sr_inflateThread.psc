@@ -558,6 +558,7 @@ Function Deflate()
 	
 	if analCum == 0.0 && vagCum == 0.0 && OralCum == 0.0
 		FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
+		FormListClear(inflater, "sr.inflater.injector")
 		inflater.RemoveFaction(akActor)
 		inflater.UnencumberActor(akActor)
 		if akActor == inflater.player
@@ -791,6 +792,7 @@ Function Absorb()
 
 	if analCum == 0.0 && vagCum == 0.0 && OralCum == 0.0
 		FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
+		FormListClear(inflater, "sr.inflater.injector")
 		inflater.RemoveFaction(akActor)
 		inflater.UnencumberActor(akActor)
 		if akActor == inflater.player
