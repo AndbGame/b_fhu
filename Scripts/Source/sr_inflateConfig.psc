@@ -606,7 +606,16 @@ Event OnPageReset(String page)
 					AddTextOption("$FHU_VAG_AMOUNT", StringUtil.SubString(inflater.GetVaginalCum(a), 0, 5))
 				EndIf
 				AddTextOption("$FHU_AN_AMOUNT", StringUtil.SubString(inflater.GetAnalCum(a), 0, 5))
+				AddTextOption("$FHU_OR_AMOUNT", StringUtil.SubString(inflater.GetOralCum(a), 0, 5))
 				AddTextOption("$FHU_TOTAL_INF", StringUtil.SubString(inflater.GetInflation(a),0,5))
+				
+				int iinjector = StorageUtil.FormListCount(a, "sr.inflater.injector")
+				while iinjector > 0
+					iinjector -= 1
+					Actor injector = StorageUtil.FormListGet(a, "sr.inflater.injector", iinjector) as Actor
+					AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+				endwhile
+
 			EndIf
 		EndWhile
 		SetCursorPosition(1)

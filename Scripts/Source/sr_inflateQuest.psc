@@ -1470,9 +1470,12 @@ Function StopLeakage(Actor akActor)
 	
 	if akActor == player
 		Game.EnablePlayerControls()
+		Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
 	Else
 		MfgConsoleFunc.ResetPhonemeModifier(akActor);Player expression is controlled here(OnKeyUp)
 		ActorUtil.RemovePackageOverride(akActor, stayStillPackage)
+		Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
+		akActor.EvaluatePackage()
 	EndIf
 
 	if spermtype == 1

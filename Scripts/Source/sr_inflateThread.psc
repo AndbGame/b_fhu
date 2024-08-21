@@ -58,6 +58,11 @@ Event StartInflation()
 	running = true
 	UnregisterForUpdate()
 	Actor t = GetActorReference()
+	if !t
+		log("Can't process, Actor Reference is None.", 1)
+		clear()
+		return
+	endIf
 	If t.IsInFaction(inflater.inflaterAnimatingFaction)
 		log("Can't process, she is already animating.", 1)
 		clear()
@@ -381,20 +386,26 @@ Function Deflate()
 	float startAn = analCum
 	float startOral = oralCum
 	float totalInf
-	float maxInflation = inflater.config.maxInflation
+	float maxInflation
 	
 	if isVaginal
 		currentInflation = GetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		totalInf = vagCum + analCum
 		Cumtype = 1
+		maxInflation = inflater.config.maxInflation
+		log("deflateTarget Vaginal = "+vagCum+" + "+analCum+" - "+cumAmount)
 	elseif isAnal
 		currentInflation = GetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		totalInf = vagCum + analCum
 		Cumtype = 2
+		maxInflation = inflater.config.maxInflation
+		log("deflateTarget Anal = "+vagCum+" + "+analCum+" - "+cumAmount)
 	elseif isOral
 		currentInflation = oralCum
 		totalInf = oralCum
 		Cumtype = 3
+		maxInflation = inflater.config.OralmaxInflation
+		log("deflateTarget Oral = "+oralCum+" - "+cumAmount)
 	endif
 	
 	If (isAnal && analCum - cumAmount > 0.0 && vagCum > 0.0) || (!isAnal && vagCum - cumAmount > 0.0 && analCum > 0.0) || (isAnal && analCum - cumAmount > 0.0 && inflater.sexlab.GetGender(akActor)==0)
@@ -402,7 +413,6 @@ Function Deflate()
 	EndIf
 
 	float deflateTarget = totalInf - cumAmount
-	log("deflateTarget = "+vagCum+" + "+analCum+" - "+cumAmount)
 
 	if deflateTarget < 0.0
 		deflateTarget = 0.0
@@ -424,7 +434,7 @@ Function Deflate()
 ;		step = deflationOralAmount / steps
 ;	endif
 	
-	log("cumAmount: " + cumAmount)
+	;log("cumAmount: " + cumAmount)
 	log("DefAmount: " + deflationAmount + ", total time: " + tme + ", steps: " + steps + ", step: " + step)
 	
 	inflater.StartLeakage(akActor, Cumtype, animate)
@@ -481,8 +491,7 @@ Function Deflate()
 		EndIf
 		
 		if isAnal || isVaginal
-			akActor.RemoveSpell(inflater.sr_inflateBurstSpell)
-			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, deflateTarget)
+				akActor.RemoveSpell(inflater.sr_inflateBurstSpell)
 		endif
 	Else
 		Utility.wait(tme)
@@ -539,6 +548,8 @@ Function Deflate()
 			EndIf
 			UnsetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		else
+			deflateTarget = analCum + vagCum
+			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, deflateTarget)
 			inflater.UpdateFaction(akActor)
 			inflater.EncumberActor(akActor)
 		endif
@@ -716,8 +727,7 @@ Function Absorb()
 		EndIf
 		
 		if isAnal || isVaginal
-			akActor.RemoveSpell(inflater.sr_inflateBurstSpell)
-			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, deflateTarget)
+				akActor.RemoveSpell(inflater.sr_inflateBurstSpell)
 		endif
 	Else
 		Utility.wait(tme)
@@ -773,6 +783,8 @@ Function Absorb()
 			EndIf
 			UnsetFloatValue(akActor, inflater.INFLATION_AMOUNT)
 		else
+			deflateTarget = analCum + vagCum
+			SetFloatValue(akActor, inflater.INFLATION_AMOUNT, deflateTarget)
 			inflater.UpdateFaction(akActor)
 			inflater.EncumberActor(akActor)
 		endif
