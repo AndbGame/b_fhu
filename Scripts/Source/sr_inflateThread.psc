@@ -436,8 +436,11 @@ Function Deflate()
 	
 	;log("cumAmount: " + cumAmount)
 	log("DefAmount: " + deflationAmount + ", total time: " + tme + ", steps: " + steps + ", step: " + step)
+
+	int spermtype =  inflater.GetSpermLastActor(akActor)
 	
-	inflater.StartLeakage(akActor, Cumtype, animate)
+	inflater.StartLeakage(akActor, Cumtype, animate, spermtype)
+
 	If akActor.Is3DLoaded()
 		inflater.Moan(akActor)
 	EndIf
@@ -497,7 +500,7 @@ Function Deflate()
 		Utility.wait(tme)
 	endIf
 
-	inflater.StopLeakage(akActor)
+	inflater.StopLeakage(akActor, spermtype)
 		
 	log("Deflated to: " + deflateTarget +" (" +currentInflation + ")")
 	if isAnal
@@ -672,7 +675,6 @@ Function Absorb()
 	log("cumAmount: " + cumAmount)
 	log("DefAmount: " + deflationAmount + ", total time: " + tme + ", steps: " + steps + ", step: " + step)
 	
-	;inflater.StartLeakage(akActor, isAnal, animate)
 	If akActor.Is3DLoaded()
 		inflater.Moan(akActor)
 	EndIf
@@ -732,8 +734,6 @@ Function Absorb()
 	Else
 		Utility.wait(tme)
 	endIf
-
-	;inflater.StopLeakage(akActor)
 		
 	log("Deflated to: " + deflateTarget +" (" +currentInflation + ")")
 	if isAnal

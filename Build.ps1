@@ -124,7 +124,7 @@ foreach ( $pscFile in $pscFiles )
         Write-Host "!" $ret.file.Name
         Write-Host "    -" $ret.command $ret.file
         Log -Level 0 -msg "Process result" -object $ret
-        #Exit
+        Exit
     } else {
         Log -Level 0 -msg "Process result" -object $ret
     }

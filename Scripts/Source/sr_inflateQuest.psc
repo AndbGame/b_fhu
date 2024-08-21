@@ -95,8 +95,8 @@ ImpactDataSet Property SFU_CumImpactDataSet Auto
 ImpactDataSet Property SFU_CumMidImpactDataSet Auto
 ImpactDataSet Property SFU_CumHighImpactDataSet Auto
 
-Actor[] Property Injector Auto ; deprecated
-Actor[] Property InjectorPlayer Auto ; deprecated
+;Actor[] Property Injector Auto ; deprecated
+;Actor[] Property InjectorPlayer Auto ; deprecated
 formlist Property sr_InjectorFormlist auto
 Actor Property Player Auto
 Actor DeflateActor
@@ -222,8 +222,8 @@ Race Property FrostbiteSpiderRaceGiant Auto
 Race Property FrostbiteSpiderRaceLarge Auto
 Race Property DLC2ExpSpiderBaseRace Auto
 Race Property DLC2ExpSpiderPackmuleRace Auto
-int Property spermtype Auto
-Bool AnalDeflation
+;int Property spermtype Auto ; deprecated
+;Bool AnalDeflation
 
 Sound Property sr_FHUMoanMildMarker  Auto  
 Sound Property sr_FHUMoanHardMarker  Auto  
@@ -862,26 +862,35 @@ Function Absorbto(Actor akActor, int poolMask, float targetLevel = -1.0, float t
 	AbsorptionQueued()
 EndFunction
 
-Function CheckingLastActor(actor akactor)
-	If akactor != player
-		; TODO
+; Get Sperm type for Actor
+Int Function GetSpermLastActor(actor akactor)
+	form Male
+	race malerace
+	float chaurusnum = 0
+	float spidernum = 0
+	float humannum = 0
+	float ashHoppernum = 0
+	float Draugrnum = 0
+	float Spriggannum = 0
+	float StoneAtronachnum = 0
+	float beastcumnum = 0
+	float RaceAmount
+	int actori = -1
+	int spermtype = 0
+	int i
+	If akactor == player
+		i = sr_InjectorFormlist.getsize()
+	Else
+		i = FormListCount(akactor, "sr.inflater.injector")
 	EndIf
-form Male
-race malerace
-float chaurusnum = 0
-float spidernum = 0
-float humannum = 0
-float ashHoppernum = 0
-float Draugrnum = 0
-float Spriggannum = 0
-float StoneAtronachnum = 0
-float beastcumnum = 0
-float RaceAmount
-int actori = -1
-int i = sr_InjectorFormlist.getsize()
+	
 	while i > 0
 		i -= 1
-		Male = sr_InjectorFormlist.getat(i)
+		If akactor == player
+			Male = sr_InjectorFormlist.getat(i)
+		Else
+			Male = FormListGet(akactor, "sr.inflater.injector", i) as Actor
+		EndIf
 		
 		if Male
 			actori = GetCreatureRaceint(Male as actor)
@@ -911,12 +920,14 @@ int i = sr_InjectorFormlist.getsize()
 				beastcumnum += 1
 			endif
 		else
-			sr_InjectorFormlist.RemoveAddedForm(Male)
+			If akactor == player
+				sr_InjectorFormlist.RemoveAddedForm(Male)
+			EndIf
 		endif
 	endwhile
 
-RaceAmount = chaurusnum + Draugrnum + spidernum + humannum + ashHoppernum + beastcumnum + Spriggannum + StoneAtronachnum
-float RandomSperm = Utility.randomfloat(0, RaceAmount)
+	RaceAmount = chaurusnum + Draugrnum + spidernum + humannum + ashHoppernum + beastcumnum + Spriggannum + StoneAtronachnum
+	float RandomSperm = Utility.randomfloat(0, RaceAmount)
 
 	if RandomSperm > 0
 		if RandomSperm <= humannum
@@ -940,7 +951,8 @@ float RandomSperm = Utility.randomfloat(0, RaceAmount)
 		spermtype = 0
 	endif
 	
-akactor.setfactionrank(sr_DARAnimatingType, spermtype)
+	akactor.setfactionrank(sr_DARAnimatingType, spermtype)
+	return spermtype
 EndFunction
 
 ;0human
@@ -1021,16 +1033,15 @@ else
 endif
 EndFunction
 
-;Function StartLeakage(Actor akActor, bool isAnal, int animate)
-Function StartLeakage(Actor akActor, int CumType, int animate)
-bool isAnal
-if Cumtype == 2
-	isAnal = true
-else
-	isAnal = false
-endif
+Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
+	bool isAnal
+	if Cumtype == 2
+		isAnal = true
+	else
+		isAnal = false
+	endif
 
-cumtypei = cumtype
+	cumtypei = cumtype
 
 	If !akActor.Is3DLoaded()
 	;	log("Skipping animation for " + akActor.GetLeveledActorBase().GetName())
@@ -1051,11 +1062,16 @@ cumtypei = cumtype
 		endif
 	endif
 	
-	If config.animDeflate
-		if Cumtype < 3;Nostrip when oral
-			StripActor(akActor)
-		endif
-		;StripCover(akActor, isAnal)
+	If !config.animDeflate
+		SetIntValue(akActor, ANIMATING, -1)
+		return
+	EndIf
+
+	if Cumtype < 3;Nostrip when oral
+		StripActor(akActor)
+	endif
+
+	;StripCover(akActor, isAnal)
 	MfgConsoleFunc.ResetPhonemeModifier(akActor)
 	If Utility.RandomInt(0, 99) < 40 && sr_TongueEffect.getvalue() == 1
 		EquiprandomTongue(akactor, true)
@@ -1076,277 +1092,278 @@ cumtypei = cumtype
 ;			sexlab.ApplyCum(akActor, 1)
 ;		EndIf
 		
-		If CumType == 1
-			sexlab.AddCum(akActor, true, false, false)
+	If CumType == 1
+		sexlab.AddCum(akActor, true, false, false)
+	elseif CumType == 2
+		sexlab.AddCum(akActor, false, false, true)
+	elseif CumType == 3
+		sexlab.AddCum(akActor, false, true, false)
+	else
+		sexlab.AddCum(akActor)
+	endif
+
+	if animate < 0
+		SetIntValue(akActor, ANIMATING, -1)
+		return
+	endIf
+
+	if (config.SFU_PlacePuddles)
+		if Cumtype < 3
+			ApplyPuddle(akActor, 0, 0, 1)
+		elseif Cumtype == 3;oral
+			ApplyPuddle(akActor, 26, 0, 1)
+		endif
+	endif
+
+	If akActor.IsInCombat() || isAnimating(akActor)
+		SetIntValue(akActor, ANIMATING, 0)
+		log("StartLeakage Animation blocked for " + akActor.GetLeveledActorBase().GetName())
+		return
+	EndIf
+
+	If akActor == Player
+		Game.ForceThirdPerson()
+	EndIf
+
+	If animate == 2
+		; Burst deflate 
+		;	log("	burst deflate")
+		if CumType == 1
+			akActor.addItem(sr_VagLeak, 1, true)
+			akActor.equipItem(sr_VagLeak, abSilent=true)
 		elseif CumType == 2
-			sexlab.AddCum(akActor, false, false, true)
+			akActor.addItem(sr_AnalLeak, 1, true)
+			akActor.equipItem(sr_AnalLeak, abSilent=true)
 		elseif CumType == 3
-			sexlab.AddCum(akActor, false, true, false)
-		else
-			sexlab.AddCum(akActor)
-		endif
-	
-		if animate < 0
-			SetIntValue(akActor, ANIMATING, -1)
-			return
-		endIf
-		
-		AnalDeflation = isAnal
-		
-		If akActor == Player
-			Game.ForceThirdPerson()
+			akActor.addItem(sr_OralLeak, 1, true)
+			Utility.Wait(0.5)
+			akActor.equipItem(sr_OralLeak, abSilent=true)
 		EndIf
-	
-		if (config.SFU_PlacePuddles)
-			if Cumtype < 3
-				ApplyPuddle(akActor, 0, 0, 1)
-			elseif Cumtype == 3;oral
-				ApplyPuddle(akActor, 26, 0, 1)
-			endif
-		endif
-	
-		If !akActor.IsOnMount()
-			If animate == 2
-				; Burst deflate 
-			;	log("	burst deflate")
+		SetIntValue(akActor, ANIMATING, 2)
+		If akActor == player
+			int handle = ModEvent.Create("dhlp-weapondrop")
+			ModEvent.PushBool(handle, true)
+			ModEvent.PushFloat(handle, 1.5)
+			ModEvent.PushString(handle, "$FHU_BURST_WEAPON_DROP")
+			ModEvent.PushString(handle, "$FHU_BURST_SPELL_DROP")
+			If animate >= 10
+				akActor.PlayIdle(BaboAnimsStart[animate - 10])
+			Else
+				animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
+				akActor.PlayIdle(BaboAnimsStart[animnum])
+			EndIf
+			If ModEvent.Send(handle)
+				Utility.Wait(1.2)
+			EndIf
+		EndIf 
+		Debug.SendAnimationEvent(akActor, "BleedOutStart")
+	ElseIf animate == 1 || (animate == 0 && Utility.RandomInt(0, 99) < 80) || animate >= 10
+		; normal, less-violent deflate 
+		;	log("	normal deflate")
+		If akActor.IsWeaponDrawn()
+			akActor.SheatheWeapon()
+			Utility.Wait(0.8)
+		EndIf
+		SetIntValue(akActor, ANIMATING, 1)
+		if akActor == player
+			Input.TapKey(Input.GetMappedKey("Forward"))
+			Game.DisablePlayerControls()
+		Else
+			ActorUtil.AddPackageOverride(akActor, stayStillPackage, 100)
+		EndIf
+		If animate >= 10
+			akActor.PlayIdle(BaboAnimsStart[animate - 10])
+		Else
+			if spermtype == 0
 				if CumType == 1
+					animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
+					akActor.PlayIdle(BaboAnimsStart[animnum])
 					akActor.addItem(sr_VagLeak, 1, true)
 					akActor.equipItem(sr_VagLeak, abSilent=true)
 				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
 					akActor.addItem(sr_AnalLeak, 1, true)
 					akActor.equipItem(sr_AnalLeak, abSilent=true)
 				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
 					akActor.addItem(sr_OralLeak, 1, true)
-					Utility.Wait(0.5)
 					akActor.equipItem(sr_OralLeak, abSilent=true)
-				EndIf
-				SetIntValue(akActor, ANIMATING, 2)
-				If akActor == player
-					int handle = ModEvent.Create("dhlp-weapondrop")
-					ModEvent.PushBool(handle, true)
-					ModEvent.PushFloat(handle, 1.5)
-					ModEvent.PushString(handle, "$FHU_BURST_WEAPON_DROP")
-					ModEvent.PushString(handle, "$FHU_BURST_SPELL_DROP")
-					If animate >= 10
-						akActor.PlayIdle(BaboAnimsStart[animate - 10])
-					Else
-						animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
-						akActor.PlayIdle(BaboAnimsStart[animnum])
-					EndIf
-					If ModEvent.Send(handle)
-						Utility.Wait(1.2)
-					EndIf
-				EndIf 
-				Debug.SendAnimationEvent(akActor, "BleedOutStart")
-			ElseIf animate == 1 || (animate == 0 && Utility.RandomInt(0, 99) < 80) || animate >= 10
-				; normal, less-violent deflate 
-			;	log("	normal deflate")
-				If akActor.IsWeaponDrawn()
-					akActor.SheatheWeapon()
-					Utility.Wait(0.8)
-				EndIf
-				SetIntValue(akActor, ANIMATING, 1)
-				if akActor == player
-					Input.TapKey(Input.GetMappedKey("Forward"))
-					Game.DisablePlayerControls()
-				Else
-					ActorUtil.AddPackageOverride(akActor, stayStillPackage, 100)
-				EndIf
-				If animate >= 10
-					akActor.PlayIdle(BaboAnimsStart[animate - 10])
-				Else
-					if spermtype == 0
-						if CumType == 1
-							animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_VagLeak, 1, true)
-							akActor.equipItem(sr_VagLeak, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_AnalLeak, 1, true)
-							akActor.equipItem(sr_AnalLeak, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeak, 1, true)
-							akActor.equipItem(sr_OralLeak, abSilent=true)
-						endif
-					elseif spermtype == 1;BeastCum
-						if CumType == 1
-							animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_vagLeakBeast, 1, true)
-							akActor.equipItem(sr_vagLeakBeast, abSilent=true)		
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_analLeakBeast, 1, true)
-							akActor.equipItem(sr_analLeakBeast, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeakBeast, 1, true)
-							akActor.equipItem(sr_OralLeakBeast, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							if GetInflation(akactor) > 3.0 && CumType < 3
-								akActor.addItem(sr_ThickCum, 1, true)
-								akActor.equipItem(sr_ThickCum, abSilent=true)
-							elseif GetOralCum(akactor) > 1.0 && CumType == 3
-								akActor.addItem(sr_ThickCum, 1, true)
-								akActor.equipItem(sr_ThickCum, abSilent=true)
-							endif
-						endif
-					elseif spermtype == 2;dragur
-						if CumType == 1
-							animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_vagLeakRotten, 1, true)
-							akActor.equipItem(sr_vagLeakRotten, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_analLeakRotten, 1, true)
-							akActor.equipItem(sr_analLeakRotten, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeakRotten, 1, true)
-							akActor.equipItem(sr_OralLeakRotten, abSilent=true)
-						endif
-					elseif spermtype == 3;Spider
-						if CumType == 1
-							animnum = 3
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_VagLeak, 1, true)
-							akActor.equipItem(sr_VagLeak, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_AnalLeak, 1, true)
-							akActor.equipItem(sr_AnalLeak, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeak, 1, true)
-							akActor.equipItem(sr_OralLeak, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							akActor.addItem(sr_SpiderEggs, 1, true)
-							akActor.equipItem(sr_SpiderEggs, abSilent=true)
-						endif
-					elseif spermtype == 4;Chaurus
-						if CumType == 1
-							animnum = 3
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_VagLeak, 1, true)
-							akActor.equipItem(sr_VagLeak, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_AnalLeak, 1, true)
-							akActor.equipItem(sr_AnalLeak, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeak, 1, true)
-							akActor.equipItem(sr_OralLeak, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							if GetInflation(akactor) >= 3.0 && CumType < 3
-								akActor.addItem(sr_ChaurusLarvaeEggs, 1, true)
-								akActor.equipItem(sr_ChaurusLarvaeEggs, abSilent=true)
-							elseif GetInflation(akactor) < 3.0 && CumType < 3
-								akActor.addItem(sr_ChaurusEggs, 1, true)
-								akActor.equipItem(sr_ChaurusEggs, abSilent=true)
-							elseif CumType == 3
-								akActor.addItem(sr_ChaurusEggs, 1, true)
-								akActor.equipItem(sr_ChaurusEggs, abSilent=true)
-							endif
-						endif
-					elseif spermtype == 5;Spriggan
-						if CumType == 1
-							animnum = 3
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_vagLeakGreen, 1, true)
-							akActor.equipItem(sr_vagLeakGreen, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_analLeakGreen, 1, true)
-							akActor.equipItem(sr_analLeakGreen, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeakGreen, 1, true)
-							akActor.equipItem(sr_OralLeakGreen, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							if GetInflation(akactor) >= 3.0 && CumType < 3
-								akActor.addItem(sr_SprigganSlug, 1, true)
-								akActor.equipItem(sr_SprigganSlug, abSilent=true)
-							elseif GetInflation(akactor) < 3.0 && CumType < 3
-								akActor.addItem(sr_ThickCumGreen, 1, true)
-								akActor.equipItem(sr_ThickCumGreen, abSilent=true)
-							elseif CumType == 3
-								akActor.addItem(sr_ThickCumGreen, 1, true)
-								akActor.equipItem(sr_ThickCumGreen, abSilent=true)
-							endif
-						endif
-					elseif spermtype == 6;StoneAtronach
-						if CumType == 1
-							animnum = 3
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_VagLeak, 1, true)
-							akActor.equipItem(sr_VagLeak, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_AnalLeak, 1, true)
-							akActor.equipItem(sr_AnalLeak, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeak, 1, true)
-							akActor.equipItem(sr_OralLeak, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							akActor.addItem(sr_AtronachStones, 1, true)
-							akActor.equipItem(sr_AtronachStones, abSilent=true)
-						endif
-					elseif spermtype == 7;AshHopper
-						if CumType == 1
-							animnum = 3
-							akActor.PlayIdle(BaboAnimsStart[animnum])
-							akActor.addItem(sr_VagLeak, 1, true)
-							akActor.equipItem(sr_VagLeak, abSilent=true)
-						elseif CumType == 2
-							animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
-							akActor.PlayIdle(BaboAnimsAnusStart[animnum])
-							akActor.addItem(sr_AnalLeak, 1, true)
-							akActor.equipItem(sr_AnalLeak, abSilent=true)
-						elseif CumType == 3
-							;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
-							;akActor.PlayIdle(BaboAnimsOral[animnum])
-							akActor.PlayIdle(BaboAnimsOralStart[0])
-							akActor.addItem(sr_OralLeak, 1, true)
-							akActor.equipItem(sr_OralLeak, abSilent=true)
-						endif
-						if sr_Cumvariation.getvalue() == 1
-							akActor.addItem(sr_AshHopperEggs, 1, true)
-							akActor.equipItem(sr_AshHopperEggs, abSilent=true)
-						endif
+				endif
+			elseif spermtype == 1;BeastCum
+				if CumType == 1
+					animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_vagLeakBeast, 1, true)
+					akActor.equipItem(sr_vagLeakBeast, abSilent=true)		
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_analLeakBeast, 1, true)
+					akActor.equipItem(sr_analLeakBeast, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeakBeast, 1, true)
+					akActor.equipItem(sr_OralLeakBeast, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					if GetInflation(akactor) > 3.0 && CumType < 3
+						akActor.addItem(sr_ThickCum, 1, true)
+						akActor.equipItem(sr_ThickCum, abSilent=true)
+					elseif GetOralCum(akactor) > 1.0 && CumType == 3
+						akActor.addItem(sr_ThickCum, 1, true)
+						akActor.equipItem(sr_ThickCum, abSilent=true)
 					endif
-				EndIf
-			EndIf
+				endif
+			elseif spermtype == 2;dragur
+				if CumType == 1
+					animnum = Utility.RandomInt(0, BaboAnimsStart.length - 1)
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_vagLeakRotten, 1, true)
+					akActor.equipItem(sr_vagLeakRotten, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_analLeakRotten, 1, true)
+					akActor.equipItem(sr_analLeakRotten, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeakRotten, 1, true)
+					akActor.equipItem(sr_OralLeakRotten, abSilent=true)
+				endif
+			elseif spermtype == 3;Spider
+				if CumType == 1
+					animnum = 3
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_VagLeak, 1, true)
+					akActor.equipItem(sr_VagLeak, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_AnalLeak, 1, true)
+					akActor.equipItem(sr_AnalLeak, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeak, 1, true)
+					akActor.equipItem(sr_OralLeak, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					akActor.addItem(sr_SpiderEggs, 1, true)
+					akActor.equipItem(sr_SpiderEggs, abSilent=true)
+				endif
+			elseif spermtype == 4;Chaurus
+				if CumType == 1
+					animnum = 3
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_VagLeak, 1, true)
+					akActor.equipItem(sr_VagLeak, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_AnalLeak, 1, true)
+					akActor.equipItem(sr_AnalLeak, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeak, 1, true)
+					akActor.equipItem(sr_OralLeak, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					if GetInflation(akactor) >= 3.0 && CumType < 3
+						akActor.addItem(sr_ChaurusLarvaeEggs, 1, true)
+						akActor.equipItem(sr_ChaurusLarvaeEggs, abSilent=true)
+					elseif GetInflation(akactor) < 3.0 && CumType < 3
+						akActor.addItem(sr_ChaurusEggs, 1, true)
+						akActor.equipItem(sr_ChaurusEggs, abSilent=true)
+					elseif CumType == 3
+						akActor.addItem(sr_ChaurusEggs, 1, true)
+						akActor.equipItem(sr_ChaurusEggs, abSilent=true)
+					endif
+				endif
+			elseif spermtype == 5;Spriggan
+				if CumType == 1
+					animnum = 3
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_vagLeakGreen, 1, true)
+					akActor.equipItem(sr_vagLeakGreen, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_analLeakGreen, 1, true)
+					akActor.equipItem(sr_analLeakGreen, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeakGreen, 1, true)
+					akActor.equipItem(sr_OralLeakGreen, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					if GetInflation(akactor) >= 3.0 && CumType < 3
+						akActor.addItem(sr_SprigganSlug, 1, true)
+						akActor.equipItem(sr_SprigganSlug, abSilent=true)
+					elseif GetInflation(akactor) < 3.0 && CumType < 3
+						akActor.addItem(sr_ThickCumGreen, 1, true)
+						akActor.equipItem(sr_ThickCumGreen, abSilent=true)
+					elseif CumType == 3
+						akActor.addItem(sr_ThickCumGreen, 1, true)
+						akActor.equipItem(sr_ThickCumGreen, abSilent=true)
+					endif
+				endif
+			elseif spermtype == 6;StoneAtronach
+				if CumType == 1
+					animnum = 3
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_VagLeak, 1, true)
+					akActor.equipItem(sr_VagLeak, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_AnalLeak, 1, true)
+					akActor.equipItem(sr_AnalLeak, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeak, 1, true)
+					akActor.equipItem(sr_OralLeak, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					akActor.addItem(sr_AtronachStones, 1, true)
+					akActor.equipItem(sr_AtronachStones, abSilent=true)
+				endif
+			elseif spermtype == 7;AshHopper
+				if CumType == 1
+					animnum = 3
+					akActor.PlayIdle(BaboAnimsStart[animnum])
+					akActor.addItem(sr_VagLeak, 1, true)
+					akActor.equipItem(sr_VagLeak, abSilent=true)
+				elseif CumType == 2
+					animnum = Utility.RandomInt(0, BaboAnimsAnusStart.length - 1)
+					akActor.PlayIdle(BaboAnimsAnusStart[animnum])
+					akActor.addItem(sr_AnalLeak, 1, true)
+					akActor.equipItem(sr_AnalLeak, abSilent=true)
+				elseif CumType == 3
+					;animnum = Utility.RandomInt(0, BaboAnimsOral.length - 1)
+					;akActor.PlayIdle(BaboAnimsOral[animnum])
+					akActor.PlayIdle(BaboAnimsOralStart[0])
+					akActor.addItem(sr_OralLeak, 1, true)
+					akActor.equipItem(sr_OralLeak, abSilent=true)
+				endif
+				if sr_Cumvariation.getvalue() == 1
+					akActor.addItem(sr_AshHopperEggs, 1, true)
+					akActor.equipItem(sr_AshHopperEggs, abSilent=true)
+				endif
+			endif
 		EndIf
 	EndIf
 EndFunction
@@ -1444,8 +1461,11 @@ Function EmotionWhenLeakage(actor akActor)
 	EndIf
 EndFunction
 
-Function StopLeakage(Actor akActor)
+Function StopLeakage(Actor akActor, int spermtype)
 	int anim = GetIntValue(akActor, ANIMATING,0)
+	;if(isAnimating(akActor)) 
+	;	return
+	;EndIf
 	If anim > 0
 		If anim == 1
 			;if AnalDeflation
@@ -1469,13 +1489,17 @@ Function StopLeakage(Actor akActor)
 	EndIf
 	
 	if akActor == player
-		Game.EnablePlayerControls()
-		Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
+		If anim > 0
+			Game.EnablePlayerControls()
+			Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
+		EndIf
 	Else
 		MfgConsoleFunc.ResetPhonemeModifier(akActor);Player expression is controlled here(OnKeyUp)
 		ActorUtil.RemovePackageOverride(akActor, stayStillPackage)
-		Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
 		akActor.EvaluatePackage()
+		If anim > 0
+			Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
+		EndIf
 	EndIf
 
 	if spermtype == 1
@@ -1736,16 +1760,18 @@ State MonitoringInflation
 				
 				int queued = 0
 				while queued < threads.length && n > 0
-				
 					n -= 1
 					Actor a = FormListGet(self, INFLATED_ACTORS, n) as Actor
-					if a && !a.IsDead() && !a.IsInCombat() && a.GetCurrentScene() == none && !isAnimating(a)
+					if a && !a.IsDead() && !a.IsInCombat() && a.GetCurrentScene() == none && !a.IsInFaction(slAnimatingFaction)
 						float lastVagTime = GetFloatValue(a, LAST_TIME_VAG) 
 						float lastAnalTime = GetFloatValue(a, LAST_TIME_ANAL)
 						float lastoralTime = GetFloatValue(a, LAST_TIME_ORAL)
-						bool deflateVag = lastVagTime > 0.0 && ( GameDaysPassed.GetValue() - lastVagTime ) * 24 >= config.minInflationTime; Needs improvement
-						bool deflateAnal = lastAnalTime > 0.0 && ( GameDaysPassed.GetValue() - lastAnalTime ) * 24 >= config.minInflationTime
-						bool deflateOral = lastoralTime > 0.0 && ( GameDaysPassed.GetValue() - lastoralTime ) * 24 >= config.minInflationTime
+						float vagCum = GetFloatValue(a, CUM_VAGINAL)
+						float analCum = GetFloatValue(a, CUM_ANAL)
+						float oralCum = GetFloatValue(a, CUM_ORAL)
+						bool deflateVag = vagCum > 0 && lastVagTime > 0.0 && ( GameDaysPassed.GetValue() - lastVagTime ) * 24 >= config.minInflationTime; Needs improvement
+						bool deflateAnal = analCum > 0 && lastAnalTime > 0.0 && ( GameDaysPassed.GetValue() - lastAnalTime ) * 24 >= config.minInflationTime
+						bool deflateOral = oralCum > 0 && lastoralTime > 0.0 && ( GameDaysPassed.GetValue() - lastoralTime ) * 24 >= config.minInflationTime
 						
 						If deflateAnal && deflateVag ; only deflate once per tic
 							If Utility.RandomInt(0, 99) < 50 || isPlugged(a) == 2;Why either one at a time?
@@ -1753,6 +1779,9 @@ State MonitoringInflation
 							Else
 								deflateVag = false
 							EndIf
+						EndIf
+						If deflateAnal || deflateVag
+							deflateOral = false
 						EndIf
 
 					;	log("Deflate actor " + a.GetLeveledActorBase().GetName() + "? Anal: " + deflateAnal +", Vaginal: " + deflateVag)
@@ -1813,7 +1842,7 @@ State MonitoringInflation
 							endIf
 						EndIf
 						
-						if !deflateVag && !deflateAnal && Utility.RandomInt(0, 99) < GetDeflateChance(a)
+						if deflateOral && Utility.RandomInt(0, 99) < GetDeflateChance(a)
 							if sr_OnEventNoDeflation.getvalue() == 0
 								tid = QueueActor(a, false, ORAL, Config.SpermRemovalAmountoral, defTime)
 								queued += 1
@@ -1836,6 +1865,8 @@ State MonitoringInflation
 						FormListRemoveAt(self, INFLATED_ACTORS, n)
 						FormListClear(a, "sr.inflater.injector")
 					;	FormListRemove(self, INFLATED_ACTORS, FormListGet(self, INFLATED_ACTORS, n), true)
+					Else
+						log("QueueActor blocked for " + a.GetLeveledActorBase().GetName())
 					EndIf
 				EndWhile
 
@@ -2653,5 +2684,5 @@ Function SLIF_unregisterMorph(Actor akActor, String MorphName)
 EndFunction
 
 bool Function isAnimating(Actor akActor)
-	return akActor.IsInFaction(slAnimatingFaction) || akActor.IsInFaction(zadAnimatingFaction) || akActor.IsInFaction(DefeatFaction) || akActor.IsInFaction(UDMinigameFaction)
+	return akActor.IsOnMount() || (akActor.GetSitState() != 0) || (slAnimatingFaction && akActor.IsInFaction(slAnimatingFaction) ) || (zadAnimatingFaction && akActor.IsInFaction(zadAnimatingFaction) ) || (DefeatFaction && akActor.IsInFaction(DefeatFaction) ) || (UDMinigameFaction && akActor.IsInFaction(UDMinigameFaction) )
 EndFunction

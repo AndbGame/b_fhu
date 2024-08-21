@@ -173,8 +173,8 @@ Function doPush(int type)
 	else
 		pool = inflater.CUM_ORAL
 	EndIf
-	inflater.CheckingLastActor(p)
-	inflater.StartLeakage(p, type, 1)
+	int spermtype = inflater.GetSpermLastActor(p)
+	inflater.StartLeakage(p, type, 1, spermtype)
 	float dps = ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.01)
 	float currentInf
 	float startInf
@@ -236,7 +236,7 @@ Function doPush(int type)
 	endif
 	StorageUtil.SetFloatValue(p, pool, cum)
 	Utility.Wait(0.1)
-	inflater.StopLeakage(p)
+	inflater.StopLeakage(p, spermtype)
 	inflater.UpdateFaction(p)
 	inflater.UpdateOralFaction(p)
 	inflater.SendPlayerCumUpdate(cum, type == 2)
@@ -248,30 +248,30 @@ Function doPush(int type)
 	
 	if sr_Cumvariationingredients.getvalue() == 1
 		if type < 3
-			if inflater.spermtype == 0;human
+			if spermtype == 0;human
 				p.additem(FHUHumanCum, cumcompare)
-			elseif inflater.spermtype == 1;beast
+			elseif spermtype == 1;beast
 				p.additem(FHUBeastCum, cumcompare)
-			elseif inflater.spermtype == 2;Draugr
+			elseif spermtype == 2;Draugr
 				p.additem(FHURottenCum, cumcompare)
-			elseif inflater.spermtype == 3;spider
+			elseif spermtype == 3;spider
 				p.additem(FHUSpiderEgg, cumcompare)
-			elseif inflater.spermtype == 4;chaurus
+			elseif spermtype == 4;chaurus
 				if startInf > 3.0
 					p.additem(FHULarvae, 1)
 				endif
 				p.additem(FHUChaurusEggs, cumcompare)
-			elseif inflater.spermtype == 5;spriggan
+			elseif spermtype == 5;spriggan
 				p.additem(SprigganSap, cumcompare)
 				if startInf > 3.0
 					p.additem(FHUSlug, 1)
 				endif
-			elseif inflater.spermtype == 6;Stone
+			elseif spermtype == 6;Stone
 				p.additem(VoidSalts, cumcompare)
 				if startInf > 3.0
 					p.additem(SoulGemBlack, 1)
 				endif
-			elseif inflater.spermtype == 7;Ashhopper
+			elseif spermtype == 7;Ashhopper
 				p.additem(DLC2AshHopperJelly, cumcompare)
 				if startInf > 3.0
 					p.additem(FHUAshHopperEggs, 2)
