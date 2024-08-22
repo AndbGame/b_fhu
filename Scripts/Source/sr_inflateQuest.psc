@@ -1067,10 +1067,6 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 		return
 	EndIf
 
-	if Cumtype < 3;Nostrip when oral
-		StripActor(akActor)
-	endif
-
 	;StripCover(akActor, isAnal)
 	MfgConsoleFunc.ResetPhonemeModifier(akActor)
 	If Utility.RandomInt(0, 99) < 40 && sr_TongueEffect.getvalue() == 1
@@ -1120,6 +1116,10 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 		log("StartLeakage Animation blocked for " + akActor.GetLeveledActorBase().GetName())
 		return
 	EndIf
+
+	if Cumtype < 3;Nostrip when oral
+		StripActor(akActor)
+	endif
 
 	If akActor == Player
 		Game.ForceThirdPerson()
@@ -1784,14 +1784,16 @@ State MonitoringInflation
 							deflateOral = false
 						EndIf
 
-					;	log("Deflate actor " + a.GetLeveledActorBase().GetName() + "? Anal: " + deflateAnal +", Vaginal: " + deflateVag)
+						log("Deflate actor " + a.GetLeveledActorBase().GetName() + "? Anal: " + deflateAnal +", Vaginal: " + deflateVag +", Oral: " + deflateOral)
 						
-						int plugged = isPlugged(a)	
-						if sr_OnEventSpermNPC.getvalue() == 1 && !(a == player)
-							FertilityChance(a)
-						elseif sr_OnEventSpermPlayer.getvalue() == 1 && (a == player)
-							FertilityChance(a)
-						endif
+						int plugged = isPlugged(a)
+						If deflateVag
+							if sr_OnEventSpermNPC.getvalue() == 1 && !(a == player)
+								FertilityChance(a)
+							elseif sr_OnEventSpermPlayer.getvalue() == 1 && (a == player)
+								FertilityChance(a)
+							endif
+						EndIf
 						
 						If a == player
 							sr_plugged.setValueInt(plugged)
@@ -1842,7 +1844,7 @@ State MonitoringInflation
 							endIf
 						EndIf
 						
-						if deflateOral && Utility.RandomInt(0, 99) < GetDeflateChance(a)
+						if deflateOral && Utility.RandomInt(0, 99) < GetOralDeflateChance(a)
 							if sr_OnEventNoDeflation.getvalue() == 0
 								tid = QueueActor(a, false, ORAL, Config.SpermRemovalAmountoral, defTime)
 								queued += 1
@@ -1905,6 +1907,15 @@ int Function GetDeflateChance(Actor akActor)
 		chance = 90
 	endIf
 ;	log("Deflate chance: " + chance)
+	return chance
+EndFunction
+
+int Function GetOralDeflateChance(Actor akActor)
+	int chance = (GetOralPercentage(akActor) + 0.5) as int
+	chance += 33
+	If chance > 90
+		chance = 90
+	endIf
 	return chance
 EndFunction
 
