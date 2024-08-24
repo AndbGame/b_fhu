@@ -1,5 +1,7 @@
 Scriptname sr_infDeflateAbility extends ReferenceAlias
 
+import StorageUtil
+
 sr_inflateConfig Property config auto
 sr_inflateQuest Property inflater auto
 Quest Property sr_inflateExternalEventManager Auto
@@ -158,6 +160,7 @@ Function doPushDeflate(String pool, Actor p, float currentInf)
 EndFunction
 
 Function doPush(int type)
+	log("doPush")
 	Actor p = GetActorReference()
 	Game.DisablePlayerControls()
 	Game.ForceThirdPerson()
@@ -178,13 +181,26 @@ Function doPush(int type)
 	float dps = ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.01)
 	float currentInf
 	float startInf
-	if type == 1 || type == 2
+	float cum
+
+	float vagCum = GetFloatValue(p, inflater.CUM_VAGINAL)
+	float analCum = GetFloatValue(p, inflater.CUM_ANAL)
+	float oralCum = GetFloatValue(p, inflater.CUM_ORAL)
+	
+	if type == 1
 		currentInf = inflater.GetInflation(p)
+		cum = vagCum
+		log("doPush Vaginal = "+vagCum)
+	elseif type == 2
+		currentInf = inflater.GetInflation(p)
+		cum = analCum
+		log("doPush Anal = "+analCum)
 	elseif type == 3
 		currentInf = inflater.GetOralCum(p)
+		cum = oralCum
+		log("doPush Oral = "+oralCum)
 	endif
-	startInf = currentInf
-	float cum = StorageUtil.GetFloatValue(p, pool)
+
 	float originalCum = cum
 	float originalInf = currentInf
 	int deflationTick = 5
@@ -207,34 +223,59 @@ Function doPush(int type)
 		Utility.wait(0.3)
 	endWhile
 
-	If cum < 0.02
+	If cum <= 0.02
 		cum = 0.0
-		If type == 1
-			StorageUtil.UnsetFloatValue(p, inflater.LAST_TIME_VAG)
-			sr_InjectorFormlist.revert()
-		Elseif type == 2
-			StorageUtil.UnsetFloatValue(p, inflater.LAST_TIME_ANAL)
-		elseif type == 3
-			StorageUtil.UnsetFloatValue(p, inflater.LAST_TIME_ORAL)
-		EndIf
 	EndIf
 	
 	; try to get around some rounding errors and match the values
 	float diff = originalCum - cum
 	currentInf = originalInf - diff
 	
-;	log("Final cum: "+cum+", cum diff from original: " + diff + ", final inflation: " + currentInf)
-	
-	If currentInf <= 0.0
-		currentInf = 0.0
-		StorageUtil.FormListRemove(inflater, inflater.INFLATED_ACTORS, p, true)
-		inflater.sr_plugged.SetValueInt(0)
+	log("Final cum: "+cum+", cum diff from original: " + diff + ", final inflation: " + currentInf)
+
+	if type == 1
+		vagCum = cum
+		if vagCum < 0.1
+			vagCum = 0.0
+			UnsetFloatValue(p, inflater.LAST_TIME_VAG)
+			UnsetFloatValue(p, inflater.CUM_VAGINAL)
+			sr_InjectorFormlist.revert()
+		Else
+			SetFloatValue(p, inflater.CUM_VAGINAL, vagCum)
+		EndIf
+	Elseif type == 2
+		analCum = cum
+		if analCum < 0.1
+			analCum = 0.0
+			UnsetFloatValue(p, inflater.LAST_TIME_ANAL)
+			UnsetFloatValue(p, inflater.CUM_ANAL)
+		Else
+			SetFloatValue(p, inflater.CUM_ANAL, analCum)
+		EndIf
+	elseif type == 3
+		oralCum = cum
+		if oralCum < 0.1
+			oralCum = 0.0
+			UnsetFloatValue(p, inflater.LAST_TIME_ORAL)
+			UnsetFloatValue(p, inflater.CUM_ORAL)
+		Else
+			SetFloatValue(p, inflater.CUM_ORAL, oralCum)
+		EndIf
 	EndIf
+
+	If type < 3
+		if ( analCum <= 0.0 && vagCum <= 0.0 )
+			UnsetFloatValue(p, inflater.INFLATION_AMOUNT)
+		else
+			currentInf = analCum + vagCum
+			SetFloatValue(p, inflater.INFLATION_AMOUNT, currentInf)
+		endif
+	EndIf
+
+	log("Cum amounts after doPush, v: "+ vagCum +", a: "+ analCum +", t: "+ (analCum+vagCum) + ", o: " + oralCum)
+
 	doPushDeflate(pool, p, currentInf)
-	if type < 3
-		StorageUtil.SetFloatValue(p, inflater.INFLATION_AMOUNT, currentInf)
-	endif
-	StorageUtil.SetFloatValue(p, pool, cum)
+	
 	Utility.Wait(0.1)
 	inflater.StopLeakage(p, spermtype)
 	inflater.UpdateFaction(p)
@@ -284,7 +325,7 @@ Function doPush(int type)
 		endif
 	endif
 
-	if StorageUtil.GetFloatValue(p, inflater.CUM_ANAL) == 0.0 && StorageUtil.GetFloatValue(p, inflater.CUM_VAGINAL) == 0.0 && StorageUtil.GetFloatValue(p, inflater.CUM_ORAL) == 0.0
+	if analCum <= 0.0 && vagCum <= 0.0 && OralCum <= 0.0
 		StorageUtil.FormListRemove(inflater, inflater.INFLATED_ACTORS, p, true)
 		inflater.RemoveFaction(p)
 		inflater.UnencumberActor(p)

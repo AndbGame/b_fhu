@@ -399,7 +399,7 @@ Function Deflate()
 		totalInf = vagCum + analCum
 		Cumtype = 2
 		maxInflation = inflater.config.maxInflation
-		log("deflateTarget Anal = "+vagCum+" + "+analCum+" - "+cumAmount)
+		log("deflateTarget Anal = "+analCum+" + "+analCum+" - "+cumAmount)
 	elseif isOral
 		currentInflation = oralCum
 		totalInf = oralCum
@@ -518,6 +518,11 @@ Function Deflate()
 			vagCum = 0.0
 			UnsetFloatValue(akActor, inflater.LAST_TIME_VAG)
 			UnsetFloatValue(akActor, inflater.CUM_VAGINAL)
+			if akActor == inflater.player
+				inflater.sr_InjectorFormlist.revert()
+			else
+				FormListClear(akActor, "sr.inflater.injector")
+			EndIf
 		Else
 			SetFloatValue(akActor, inflater.CUM_VAGINAL, vagCum)
 		EndIf
@@ -570,9 +575,8 @@ Function Deflate()
 		EndIf
 	endif
 	
-	if analCum == 0.0 && vagCum == 0.0 && OralCum == 0.0
+	if analCum <= 0.0 && vagCum <= 0.0 && OralCum <= 0.0
 		FormListRemove(inflater, inflater.INFLATED_ACTORS, akActor, true)
-		FormListClear(inflater, "sr.inflater.injector")
 		inflater.RemoveFaction(akActor)
 		inflater.UnencumberActor(akActor)
 		if akActor == inflater.player
