@@ -1735,7 +1735,7 @@ State MonitoringInflation
 				while queued < threads.length && n > 0
 					n -= 1
 					Actor a = FormListGet(self, INFLATED_ACTORS, n) as Actor
-					if a && !a.IsDead() && !a.IsInCombat() && a.GetCurrentScene() == none && !a.IsInFaction(slAnimatingFaction)
+					if a && !a.IsDead() && !a.IsInCombat() && !a.IsInFaction(slAnimatingFaction) ; && a.GetCurrentScene() == none - we need it? moved to `isAnimating` function
 						float lastVagTime = GetFloatValue(a, LAST_TIME_VAG) 
 						float lastAnalTime = GetFloatValue(a, LAST_TIME_ANAL)
 						float lastoralTime = GetFloatValue(a, LAST_TIME_ORAL)
@@ -2686,5 +2686,5 @@ Function SLIF_unregisterMorph(Actor akActor, String MorphName)
 EndFunction
 
 bool Function isAnimating(Actor akActor)
-	return akActor.IsOnMount() || (akActor.GetSitState() != 0) || (slAnimatingFaction && akActor.IsInFaction(slAnimatingFaction) ) || (zadAnimatingFaction && akActor.IsInFaction(zadAnimatingFaction) ) || (DefeatFaction && akActor.IsInFaction(DefeatFaction) ) || (UDMinigameFaction && akActor.IsInFaction(UDMinigameFaction) )
+	return akActor.IsOnMount() || akActor.GetCurrentScene() != none || (akActor.GetSitState() != 0) || (slAnimatingFaction && akActor.IsInFaction(slAnimatingFaction) ) || (zadAnimatingFaction && akActor.IsInFaction(zadAnimatingFaction) ) || (DefeatFaction && akActor.IsInFaction(DefeatFaction) ) || (UDMinigameFaction && akActor.IsInFaction(UDMinigameFaction) )
 EndFunction
