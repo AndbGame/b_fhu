@@ -179,7 +179,7 @@ Function Inflate()
 			analCum += cumAmount
 			If ((analCum + vagCum) > maxInflation)
 				AnaltoOral = (analCum + vagCum) - maxInflation
-				analCum -= cumAmount
+				analCum = maxInflation - vagCum
 			EndIf
 			SetFloatValue(akActor, inflater.LAST_TIME_ANAL, inflater.GameDaysPassed.GetValue())
 			SetFloatValue(akActor, inflater.CUM_ANAL, analCum)
@@ -196,7 +196,7 @@ Function Inflate()
 		If !inflater.isBelted(akActor, 1)
 			vagCum += cumAmount
 			If (analCum + vagCum) > maxInflation
-				vagCum -= cumAmount
+				vagCum = maxInflation - analCum
 			EndIf
 			SetFloatValue(akActor, inflater.LAST_TIME_VAG, inflater.GameDaysPassed.GetValue())
 			SetFloatValue(akActor, inflater.CUM_VAGINAL, vagCum)
@@ -209,8 +209,11 @@ Function Inflate()
 		EndIf
 	EndIf
 
-	If isOral
-		oralCum += OralcumAmount
+	If isOral || AnaltoOral > 0
+		If isOral
+			oralCum += OralcumAmount
+		EndIf
+		oralCum += AnaltoOral
 		If oralCum > inflater.GetOralPoolSize(akActor)
 			OralBursting = oralCum - inflater.GetOralPoolSize(akActor); OralBursting Not Ready WIP
 			oralCum = inflater.GetOralPoolSize(akActor)
@@ -218,17 +221,6 @@ Function Inflate()
 		SetFloatValue(akActor, inflater.LAST_TIME_ORAL, inflater.GameDaysPassed.GetValue())
 		SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
 	EndIf
-
-	if AnaltoOral > 0
-		oralCum += AnaltoOral
-		If oralCum > inflater.GetOralPoolSize(akActor)
-			OralBursting += oralCum - inflater.GetOralPoolSize(akActor); OralBursting Not Ready WIP
-			oralCum = inflater.GetOralPoolSize(akActor)
-		endif
-		SetFloatValue(akActor, inflater.LAST_TIME_ORAL, inflater.GameDaysPassed.GetValue())
-		SetFloatValue(akActor, inflater.CUM_ORAL, oralCum)
-	endif
-	
 
 	If belted > 1
 		log("Fully belted, done.")
