@@ -320,15 +320,22 @@ Function SetDefaults()
 	statusMsg = statusMsgDefault
 	npcComments = npcCommentsDefault
 	followerComments = followerCommentsDefault
+	If followerComments
+		sr_followerCommentChance.SetValueInt(26)
+	EndIf
 	eventManager.interval = eventIntervalDefault
 	SendeventChance = SendeventChanceDefault
+	sr_SendingSpermDataChance.setvalue(SendeventChance)
 	SendeventCriterion = SendeventCriterionDefault
+	sr_SendingSpermDataCriterion.setvalue(SendeventCriterion)
 	events = eventsDefault
 	bellyScale = bellyScaleDefault
 	BodyMorph = true
 	FHUSLIF = true
 	MoanSound = true
+	sr_MoanSound.setvalue(1)
 	SexlabMoanSound = true
+	sr_SexlabMoanSound.setvalue(1)
 	Deflatechance = DeflatechanceDefault
 	sr_ExpelFaliure.setvalue(Deflatechance)
 	VariousCum = VariousCumDefault

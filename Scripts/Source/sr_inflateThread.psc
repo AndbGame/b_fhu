@@ -356,6 +356,17 @@ Function Inflate()
 	EndIf
 EndFunction
 
+bool updateFHU = false
+int updateCumType = 0
+int updateSpermType = 0
+
+Function RegisterFHUUpdate(int CumType, int SpermType)
+	updateCumType = CumType
+	updateSpermType = SpermType
+	updateFHU = true
+	RegisterForSingleUpdate(10.0)
+EndFunction
+
 Function Deflate()
 	Actor akActor = GetActorReference()
 	log("Deflating")
@@ -430,6 +441,7 @@ Function Deflate()
 	int spermtype =  inflater.GetSpermLastActor(akActor)
 	
 	inflater.StartLeakage(akActor, Cumtype, animate, spermtype)
+	RegisterFHUUpdate(Cumtype, spermtype)
 
 	If akActor.Is3DLoaded()
 		inflater.Moan(akActor)
@@ -490,7 +502,7 @@ Function Deflate()
 		Utility.wait(tme)
 	endIf
 
-	inflater.StopLeakage(akActor, spermtype)
+	inflater.StopLeakage(akActor, Cumtype, spermtype)
 		
 	log("Deflated to: " + deflateTarget +" (" +currentInflation + ")")
 	if isAnal
@@ -841,6 +853,14 @@ Event OnUpdate()
 	If !running
 		log("Thread timed out, clearing.")
 		clear()
+	ElseIf updateFHU
+		if inflater.UpdateFHUmoan(GetReference(), updateCumType, updateSpermType)
+			RegisterForSingleUpdate(10.0)
+		Else
+			updateCumType = 0
+			updateSpermType = 0
+			updateFHU = false
+		EndIf
 	EndIf
 EndEvent
 

@@ -159,6 +159,26 @@ Function doPushDeflate(String pool, Actor p, float currentInf)
 	endif
 EndFunction
 
+bool updateFHU = false
+int updateCumType
+int updateSpermType
+Event OnUpdate()
+	if inflater.UpdateFHUmoan(GetReference(), updateCumType, updateSpermType)
+		RegisterForSingleUpdate(10.0)
+	Else
+		updateCumType = 0
+		updateSpermType = 0
+		updateFHU = false
+	EndIf
+EndEvent
+
+Function RegisterFHUUpdate(int CumType, int SpermType)
+	updateCumType = CumType
+	updateFHU = true
+	updateSpermType = SpermType
+	RegisterForSingleUpdate(10.0)
+EndFunction
+
 Function doPush(int type)
 	log("doPush")
 	Actor p = GetActorReference()
@@ -178,6 +198,7 @@ Function doPush(int type)
 	EndIf
 	int spermtype = inflater.GetSpermLastActor(p)
 	inflater.StartLeakage(p, type, 1, spermtype)
+	RegisterFHUUpdate(type, spermtype)
 	float dps = ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.01)
 	float currentInf
 	float startInf
@@ -277,7 +298,7 @@ Function doPush(int type)
 	doPushDeflate(pool, p, currentInf)
 	
 	Utility.Wait(0.1)
-	inflater.StopLeakage(p, spermtype)
+	inflater.StopLeakage(p, type, spermtype)
 	inflater.UpdateFaction(p)
 	inflater.UpdateOralFaction(p)
 	inflater.SendPlayerCumUpdate(cum, type == 2)

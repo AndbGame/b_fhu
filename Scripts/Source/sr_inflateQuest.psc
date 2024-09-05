@@ -99,7 +99,7 @@ ImpactDataSet Property SFU_CumHighImpactDataSet Auto
 ;Actor[] Property InjectorPlayer Auto ; deprecated
 formlist Property sr_InjectorFormlist auto
 Actor Property Player Auto
-Actor DeflateActor
+;Actor DeflateActor
 Static Property xMarker Auto
 ;Spell Property puddleSpell Auto
 
@@ -109,11 +109,11 @@ Keyword Property SLA_AnalPlugTail Auto
 Keyword Property SLA_VaginalBeads Auto
 
 int property Tongueri auto
-int property cumtypei auto
+;int property cumtypei auto
 
 sr_inflateThread[] Property threads auto
 
-Bool TongueOut
+;Bool TongueOut
 
 GlobalVariable Property sr_CumMultiplier Auto
 GlobalVariable Property sr_SLIF Auto
@@ -210,7 +210,7 @@ Idle[] BaboAnimsAnusStart
 Idle[] BaboAnimsAnusEnd
 
 int animnum
-int MoanType
+;int MoanType
 
 Race Property ChaurusRace Auto
 Race Property ChaurusReaperRace Auto
@@ -494,43 +494,44 @@ Event Orgasm(int thread, bool hasPlayer)
 	EndIf
 EndEvent
 
-Event OnUpdate()
-MfgConsoleFunc.ResetPhonemeModifier(DeflateActor)
-EmotionWhenLeakage(DeflateActor)
+bool Function UpdateFHUmoan(ObjectReference aksource, int cumType, int spermtype)
+	Actor DeflateActor = aksource as Actor
+	MfgConsoleFunc.ResetPhonemeModifier(DeflateActor)
+	EmotionWhenLeakage(DeflateActor)
+	bool needUpdate = false
 	if DeflateActor.isinfaction(inflaterAnimatingFaction)
-		if CumTypei < 3
+		needUpdate = true
+		if cumType < 3
 			if GetInflationPercentage(DeflateActor) < 50
-				FHUmoanSoundEffect(DeflateActor as ObjectReference, 1)
+				FHUmoanSoundEffect(aksource, 1, cumType)
 			else
-				FHUmoanSoundEffect(DeflateActor as ObjectReference, 2)
+				FHUmoanSoundEffect(aksource, 2, cumType)
 			endif
-			MouthOpen(DeflateActor, TongueOut, 0)
-		elseif CumTypei == 3
+			MouthOpen(DeflateActor, GetIntValue(DeflateActor, "sr.inflater.tongue_out", 0), 0)
+		elseif cumType == 3
 			MouthOpen(DeflateActor, true, 0)
 			if GetOralPercentage(DeflateActor) < 50
-				FHUmoanSoundEffect(DeflateActor as ObjectReference, 1)
+				FHUmoanSoundEffect(aksource, 1, cumType)
 			else
-				FHUmoanSoundEffect(DeflateActor as ObjectReference, 2)
+				FHUmoanSoundEffect(aksource, 2, cumType)
 			endif
 		endif
 	else
-		FHUmoanSoundAfterEffect(DeflateActor as ObjectReference, 0)
+		FHUmoanSoundAfterEffect(aksource, 0, cumType)
 		MouthOpen(DeflateActor, true, 5)
 	endif
-EndEvent
-
-Function RegisterFHUUpdate()
-	RegisterForSingleUpdate(10.0)
+	return needUpdate
 EndFunction
 
-Function FHUmoanSoundEffect(ObjectReference aksource, int type); looping
+Function FHUmoanSoundEffect(ObjectReference aksource, int type, int CumType); looping
 {type 1 = mild, type 2 = hard, type 3 = deflation fail}
+log("FHUmoanSoundEffect for " + aksource + " " +sr_MoanSound.getvalue())
 if sr_MoanSound.getvalue() == 1
 	;if aksource == Player as objectreference && type < 3
-	DeflateActor = aksource as actor
-	RegisterFHUUpdate()
+	;DeflateActor = aksource as actor
+	;RegisterFHUUpdate()
 	;endif
-	MoanType = Type
+	;MoanType = Type
 	if sr_SexlabMoanSound.getvalue() == 1
 		if type == 1
 			UseSexlabVoice(aksource as actor, 50, true)
@@ -542,51 +543,60 @@ if sr_MoanSound.getvalue() == 1
 			UseSexlabVoice(aksource as actor, 40, false)
 		endif
 	else
-		if CumTypei == 1;Vaginal
+		if CumType == 1;Vaginal
 			if type == 1
 				sr_FHUCumDeflationVaginalMildMarker.play(aksource)
+				log("FHUmoanSoundEffect Vaginal 1 " + aksource)
 			elseif type == 2
 				sr_FHUCumDeflationVaginalHardMarker.play(aksource)
+				log("FHUmoanSoundEffect Vaginal 2 " + aksource)
 			else
 				sr_FHUMoanDenialMarker.play(aksource)
+				log("FHUmoanSoundEffect Vaginal 3 " + aksource)
 			endif
 			;sr_FHUMoanMildMarker.play(aksource);No longer used. Save it for another update. Burst effect maybe
-		elseif CumTypei == 2
+		elseif CumType == 2
 			;sr_FHUMoanHardMarker.play(aksource);No longer used. Save it for another update. Burst effect maybe
 			if type == 1
 				sr_FHUCumDeflationAnalMildMarker.play(aksource)
+				log("FHUmoanSoundEffect Anal 1 " + aksource)
 			elseif type == 2
 				sr_FHUCumDeflationAnalHardMarker.play(aksource)
+				log("FHUmoanSoundEffect Anal 2 " + aksource)
 			else
 				sr_FHUMoanDenialMarker.play(aksource)
+				log("FHUmoanSoundEffect Anal 3 " + aksource)
 			endif
-		elseif CumTypei == 3
+		elseif CumType == 3
 			;sr_FHUMoanOralMarker.play(aksource)
 			if type == 1
 				sr_FHUCumDeflationOralMarker.play(aksource)
+				log("FHUmoanSoundEffect Oral 1 " + aksource)
 			elseif type == 2
 				sr_FHUCumDeflationOralMarker.play(aksource)
+				log("FHUmoanSoundEffect Oral 2 " + aksource)
 			else
 				sr_FHUCumDeflationOralFailMarker.play(aksource)
+				log("FHUmoanSoundEffect Oral 3 " + aksource)
 			endif
 		endif
 	endif
 endif
 EndFunction
 
-Function FHUmoanSoundAfterEffect(ObjectReference aksource, int type);No loop
+Function FHUmoanSoundAfterEffect(ObjectReference aksource, int type, int CumType);No loop
 if sr_MoanSound.getvalue() == 1
 	if sr_SexlabMoanSound.getvalue() == 1
 		;Nothing
 	else
-		if cumtypei == 3
+		if CumType == 3
 			sr_FHUCumDeflationOralAfterMarker.play(aksource)
 		endif
 	endif
 endif
 
 Utility.wait(6.0)
-MfgConsoleFunc.ResetPhonemeModifier(DeflateActor)
+MfgConsoleFunc.ResetPhonemeModifier(aksource as Actor)
 EndFunction
 
 Function UseSexlabVoice(actor ActorRef, int Strength, bool isvictim)
@@ -1058,24 +1068,24 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 		isAnal = false
 	endif
 
-	cumtypei = cumtype
+	;cumtypei = cumtype
 
 	If !akActor.Is3DLoaded()
 	;	log("Skipping animation for " + akActor.GetLeveledActorBase().GetName())
 		return
 	EndIf
 ;	log("Starting animation for " + akActor.GetLeveledActorBase().GetName())
-	if Cumtype < 3
+	if CumType < 3
 		if GetInflationPercentage(akactor) < 50
-			FHUmoanSoundEffect(akActor as ObjectReference, 1)
+			FHUmoanSoundEffect(akActor as ObjectReference, 1, CumType)
 		else
-			FHUmoanSoundEffect(akActor as ObjectReference, 2)
+			FHUmoanSoundEffect(akActor as ObjectReference, 2, CumType)
 		endif
-	elseif Cumtype == 3
+	elseif CumType == 3
 		if GetOralPercentage(akactor) < 50
-			FHUmoanSoundEffect(akActor as ObjectReference, 1)
+			FHUmoanSoundEffect(akActor as ObjectReference, 1, CumType)
 		else
-			FHUmoanSoundEffect(akActor as ObjectReference, 2)
+			FHUmoanSoundEffect(akActor as ObjectReference, 2, CumType)
 		endif
 	endif
 	
@@ -1090,11 +1100,11 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 		EquiprandomTongue(akactor, true)
 		EmotionWhenLeakage(akActor)
 		MouthOpen(akActor, true, 0)
-		TongueOut = true
+		SetIntValue(akActor, "sr.inflater.tongue_out", 1)
 	Else
 		EmotionWhenLeakage(akActor)
 		MouthOpen(akActor, false, 0)
-		TongueOut = false
+		SetIntValue(akActor, "sr.inflater.tongue_out", 0)
 	EndIf
 
 ;		If Utility.RandomInt(0, 99) < 33
@@ -1391,11 +1401,11 @@ Function DeflateFailMotion(actor akactor, int cumi)
 	if Utility.RandomInt(0, 99) < 40 && sr_TongueEffect.getvalue() == 1
 		EmotionWhenLeakage(akactor)
 		MouthOpen(akActor, true, 0)
-		TongueOut = true
+		SetIntValue(akActor, "sr.inflater.tongue_out", 1)
 	else
 		EmotionWhenLeakage(akactor)
 		MouthOpen(akActor, false, 0)
-		TongueOut = false
+		SetIntValue(akActor, "sr.inflater.tongue_out", 0)
 	endif
 	if cumi == 1
 		akActor.PlayIdle(BaboSpermExpel)
@@ -1404,7 +1414,7 @@ Function DeflateFailMotion(actor akactor, int cumi)
 	elseif cumi == 3
 		akActor.PlayIdle(BaboSpermOralOut)
 	endif
-	FHUmoanSoundEffect(akactor as objectreference, 3)
+	FHUmoanSoundEffect(akactor as objectreference, 3, cumi)
 EndFunction
 
 
@@ -1479,7 +1489,7 @@ Function EmotionWhenLeakage(actor akActor)
 	EndIf
 EndFunction
 
-Function StopLeakage(Actor akActor, int spermtype)
+Function StopLeakage(Actor akActor, int cumType, int spermtype)
 	int anim = GetIntValue(akActor, ANIMATING,0)
 	;if(isAnimating(akActor)) 
 	;	return
@@ -1491,11 +1501,11 @@ Function StopLeakage(Actor akActor, int spermtype)
 			;else
 			;	akActor.PlayIdle(BaboAnimsEnd[animnum])
 			;endif
-			if cumtypei == 1
+			if cumType == 1
 				akActor.PlayIdle(BaboAnimsEnd[animnum])
-			elseif cumtypei == 2
+			elseif cumType == 2
 				akActor.PlayIdle(BaboAnimsAnusEnd[animnum])
-			elseif cumtypei == 3
+			elseif cumType == 3
 				akActor.PlayIdle(BaboAnimsOralEnd[0])
 			endif
 		ElseIf anim == 2
