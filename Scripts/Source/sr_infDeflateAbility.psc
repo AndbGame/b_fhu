@@ -136,6 +136,7 @@ EndEvent
 Event OnKeyUp(int kc, float time)
 	if kc == config.defkey
 		keydown = false
+		inflater.EquiprandomTongue(GetActorReference(), false)
 		MfgConsoleFunc.ResetPhonemeModifier(GetActorReference())
 	endIf
 EndEvent
@@ -224,7 +225,7 @@ Function doPush(int type)
 
 	float originalCum = cum
 	float originalInf = currentInf
-	int deflationTick = 5
+	int deflationTick = 2
 	int tick = deflationTick
 ;	log("Starting: inf: " + currentInf +", cum: " +cum + ", pool: " + pool)
 	While keydown && p.GetActorValuePercentage("Stamina") > 0.02 && cum > 0.02

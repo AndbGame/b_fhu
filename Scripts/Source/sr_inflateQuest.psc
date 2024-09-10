@@ -108,7 +108,7 @@ Keyword Property SLA_AnalPlugBeads Auto
 Keyword Property SLA_AnalPlugTail Auto
 Keyword Property SLA_VaginalBeads Auto
 
-int property Tongueri auto
+;int property Tongueri auto
 ;int property cumtypei auto
 
 sr_inflateThread[] Property threads auto
@@ -507,9 +507,9 @@ bool Function UpdateFHUmoan(ObjectReference aksource, int cumType, int spermtype
 			else
 				FHUmoanSoundEffect(aksource, 2, cumType)
 			endif
-			MouthOpen(DeflateActor, GetIntValue(DeflateActor, "sr.inflater.tongue_out", 0), 0)
+			MouthOpen(DeflateActor, 0)
 		elseif cumType == 3
-			MouthOpen(DeflateActor, true, 0)
+			MouthOpen(DeflateActor, 0)
 			if GetOralPercentage(DeflateActor) < 50
 				FHUmoanSoundEffect(aksource, 1, cumType)
 			else
@@ -518,7 +518,7 @@ bool Function UpdateFHUmoan(ObjectReference aksource, int cumType, int spermtype
 		endif
 	else
 		FHUmoanSoundAfterEffect(aksource, 0, cumType)
-		MouthOpen(DeflateActor, true, 5)
+		MouthOpen(DeflateActor, 5)
 	endif
 	return needUpdate
 EndFunction
@@ -976,70 +976,57 @@ EndFunction
 
 Function EquiprandomTongue(actor akActor, Bool BEquip)
 if BEquip
-	Tongueri = Utility.RandomInt(1, 10)
+	int Tongueri = Utility.RandomInt(1, 10)
 	if Tongueri == 1
 		akActor.addItem(sr_linga1armor, 1, true)
 		akActor.equipItem(sr_linga1armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga1armor)
 	elseif Tongueri == 2
 		akActor.addItem(sr_linga2armor, 1, true)
 		akActor.equipItem(sr_linga2armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga2armor)
 	elseif Tongueri == 3
 		akActor.addItem(sr_linga3armor, 1, true)
 		akActor.equipItem(sr_linga3armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga3armor)
 	elseif Tongueri == 4
 		akActor.addItem(sr_linga4armor, 1, true)
 		akActor.equipItem(sr_linga4armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga4armor)
 	elseif Tongueri == 5
 		akActor.addItem(sr_linga5armor, 1, true)
 		akActor.equipItem(sr_linga5armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga5armor)
 	elseif Tongueri == 6
 		akActor.addItem(sr_linga6armor, 1, true)
 		akActor.equipItem(sr_linga6armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga6armor)
 	elseif Tongueri == 7
 		akActor.addItem(sr_linga7armor, 1, true)
 		akActor.equipItem(sr_linga7armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga7armor)
 	elseif Tongueri == 8
 		akActor.addItem(sr_linga8armor, 1, true)
 		akActor.equipItem(sr_linga8armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga8armor)
 	elseif Tongueri == 9
 		akActor.addItem(sr_linga9armor, 1, true)
 		akActor.equipItem(sr_linga9armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga9armor)
 	elseif Tongueri == 10
 		akActor.addItem(sr_linga10armor, 1, true)
 		akActor.equipItem(sr_linga10armor, abSilent=true)
+		FormListAdd(akActor, "sr.inflater.equipped_tongue", sr_linga10armor)
 	endif
 else
-	if Tongueri == 1
-		akActor.unequipItem(sr_linga1armor, abSilent=true)
-		akActor.removeItem(sr_linga1armor, 99, true)
-	elseif Tongueri == 2
-		akActor.unequipItem(sr_linga2armor, abSilent=true)
-		akActor.removeItem(sr_linga2armor, 99, true)
-	elseif Tongueri == 3
-		akActor.unequipItem(sr_linga3armor, abSilent=true)
-		akActor.removeItem(sr_linga3armor, 99, true)
-	elseif Tongueri == 4
-		akActor.unequipItem(sr_linga4armor, abSilent=true)
-		akActor.removeItem(sr_linga4armor, 99, true)
-	elseif Tongueri == 5
-		akActor.unequipItem(sr_linga5armor, abSilent=true)
-		akActor.removeItem(sr_linga5armor, 99, true)
-	elseif Tongueri == 6
-		akActor.unequipItem(sr_linga6armor, abSilent=true)
-		akActor.removeItem(sr_linga6armor, 99, true)
-	elseif Tongueri == 7
-		akActor.unequipItem(sr_linga7armor, abSilent=true)
-		akActor.removeItem(sr_linga7armor, 99, true)
-	elseif Tongueri == 8
-		akActor.unequipItem(sr_linga8armor, abSilent=true)
-		akActor.removeItem(sr_linga8armor, 99, true)
-	elseif Tongueri == 9
-		akActor.unequipItem(sr_linga9armor, abSilent=true)
-		akActor.removeItem(sr_linga9armor, 99, true)
-	elseif Tongueri == 10
-		akActor.unequipItem(sr_linga10armor, abSilent=true)
-		akActor.removeItem(sr_linga10armor, 99, true)
-	endif
+	int i = FormListCount(akActor, "sr.inflater.equipped_tongue")
+	while(i > 0)
+		i -= 1
+		Armor aTongue = FormListGet(akActor, "sr.inflater.equipped_tongue", i) as Armor
+		akActor.unequipItem(aTongue, abSilent=true)
+		akActor.removeItem(aTongue, 99, true)
+	endwhile
+	FormListClear(akActor, "sr.inflater.equipped_tongue")
 endif
 EndFunction
 
@@ -1093,19 +1080,15 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 		SetIntValue(akActor, ANIMATING, -1)
 		return
 	EndIf
+	FormListClear(akActor, "sr.inflater.equipped_tongue")
 
 	;StripCover(akActor, isAnal)
 	MfgConsoleFunc.ResetPhonemeModifier(akActor)
 	If Utility.RandomInt(0, 99) < 40 && sr_TongueEffect.getvalue() == 1
 		EquiprandomTongue(akactor, true)
-		EmotionWhenLeakage(akActor)
-		MouthOpen(akActor, true, 0)
-		SetIntValue(akActor, "sr.inflater.tongue_out", 1)
-	Else
-		EmotionWhenLeakage(akActor)
-		MouthOpen(akActor, false, 0)
-		SetIntValue(akActor, "sr.inflater.tongue_out", 0)
 	EndIf
+	EmotionWhenLeakage(akActor)
+	MouthOpen(akActor, 0)
 
 ;		If Utility.RandomInt(0, 99) < 33
 ;			sexlab.ApplyCum(akActor, 5)
@@ -1399,14 +1382,10 @@ EndFunction
 Function DeflateFailMotion(actor akactor, int cumi)
 	MfgConsoleFunc.ResetPhonemeModifier(akActor)
 	if Utility.RandomInt(0, 99) < 40 && sr_TongueEffect.getvalue() == 1
-		EmotionWhenLeakage(akactor)
-		MouthOpen(akActor, true, 0)
-		SetIntValue(akActor, "sr.inflater.tongue_out", 1)
-	else
-		EmotionWhenLeakage(akactor)
-		MouthOpen(akActor, false, 0)
-		SetIntValue(akActor, "sr.inflater.tongue_out", 0)
+		EquiprandomTongue(akactor, true)
 	endif
+	EmotionWhenLeakage(akactor)
+	MouthOpen(akActor, 0)
 	if cumi == 1
 		akActor.PlayIdle(BaboSpermExpel)
 	elseif cumi == 2
@@ -1418,15 +1397,16 @@ Function DeflateFailMotion(actor akactor, int cumi)
 EndFunction
 
 
-Function MouthOpen(actor akActor, bool Tongue, int randomi)
+Function MouthOpen(actor akActor, int randomi)
 {randomi 1-3 normal, 4-5 oralcum, 0 covers all}
+int aTongue = FormListCount(akActor, "sr.inflater.equipped_tongue")
 if randomi == 0
 	randomi = Utility.RandomInt(1, 5)
 elseif randomi < 4
 	randomi = Utility.RandomInt(1, 3)
 endif
 	if randomi == 1
-		if Tongue
+		if aTongue > 0
 			MfgConsoleFunc.SetPhoneme(akActor,1,70)
 			MfgConsoleFunc.SetPhoneme(akActor,14,30)
 		Else
@@ -1435,7 +1415,7 @@ endif
 			MfgConsoleFunc.SetPhoneme(akActor,7,50)
 		Endif
 	elseif randomi == 2
-		if Tongue
+		if aTongue > 0
 			MfgConsoleFunc.SetPhoneme(akActor,1,70)
 			MfgConsoleFunc.SetPhoneme(akActor,14,30)
 		Else
@@ -1443,7 +1423,7 @@ endif
 			MfgConsoleFunc.SetPhoneme(akActor,12,70)
 		Endif
 	elseif randomi == 3
-		if Tongue
+		if aTongue > 0
 			MfgConsoleFunc.SetPhoneme(akActor,0,40)
 			MfgConsoleFunc.SetPhoneme(akActor,0,50)
 		Else
@@ -2210,7 +2190,7 @@ int thisSlot = 0x01
 	if (Math.LogicalAnd(thisSlot, slotsChecked) != thisSlot)
 		curr_armor = target.GetWornForm(thisSlot) as Armor
 		if curr_armor
-			if !SexLabUtil.HasKeywordSub(curr_armor, "NoStrip") && (FormListFind(target, "sr.inflater.equipped_leak", curr_armor) == -1)
+			if !SexLabUtil.HasKeywordSub(curr_armor, "NoStrip") && (FormListFind(target, "sr.inflater.equipped_leak", curr_armor) == -1) && (FormListFind(target, "sr.inflater.equipped_tongue", curr_armor) == -1)
 				;wornforms[index] = curr_armor
 				Target.UnequipItem(curr_armor, false, true)
 				log("UnequipArmor from " + target + ": " + curr_armor)
