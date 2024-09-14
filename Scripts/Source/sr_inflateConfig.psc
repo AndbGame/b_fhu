@@ -320,15 +320,22 @@ Function SetDefaults()
 	statusMsg = statusMsgDefault
 	npcComments = npcCommentsDefault
 	followerComments = followerCommentsDefault
+	If followerComments
+		sr_followerCommentChance.SetValueInt(26)
+	EndIf
 	eventManager.interval = eventIntervalDefault
 	SendeventChance = SendeventChanceDefault
+	sr_SendingSpermDataChance.setvalue(SendeventChance)
 	SendeventCriterion = SendeventCriterionDefault
+	sr_SendingSpermDataCriterion.setvalue(SendeventCriterion)
 	events = eventsDefault
 	bellyScale = bellyScaleDefault
 	BodyMorph = true
 	FHUSLIF = true
 	MoanSound = true
+	sr_MoanSound.setvalue(1)
 	SexlabMoanSound = true
+	sr_SexlabMoanSound.setvalue(1)
 	Deflatechance = DeflatechanceDefault
 	sr_ExpelFaliure.setvalue(Deflatechance)
 	VariousCum = VariousCumDefault
@@ -416,7 +423,7 @@ Event OnVersionUpdate(int newVersion)
 		EndIf
 		Debug.Notification("Fill Her Up " + inflater.GetVersionString() + " initialized.")
 	EndIf
-	debug.messagebox("Fill Her Up Update")
+	;debug.messagebox("Fill Her Up Update")
 EndEvent
 
 
@@ -606,7 +613,16 @@ Event OnPageReset(String page)
 					AddTextOption("$FHU_VAG_AMOUNT", StringUtil.SubString(inflater.GetVaginalCum(a), 0, 5))
 				EndIf
 				AddTextOption("$FHU_AN_AMOUNT", StringUtil.SubString(inflater.GetAnalCum(a), 0, 5))
+				AddTextOption("$FHU_OR_AMOUNT", StringUtil.SubString(inflater.GetOralCum(a), 0, 5))
 				AddTextOption("$FHU_TOTAL_INF", StringUtil.SubString(inflater.GetInflation(a),0,5))
+				
+				int iinjector = StorageUtil.FormListCount(a, "sr.inflater.injector")
+				while iinjector > 0
+					iinjector -= 1
+					Actor injector = StorageUtil.FormListGet(a, "sr.inflater.injector", iinjector) as Actor
+					AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+				endwhile
+
 			EndIf
 		EndWhile
 		SetCursorPosition(1)
@@ -787,8 +803,8 @@ State settings
 			SetToggleOptionValue(loggingOID, logging)
 			inflater.log("Logging set to: " + logging)
 		ElseIf opt == FHUSLIFOID
-			FHUSLIF != FHUSLIF
-			sr_SLIF.setvalue(FHUSLIF as int)
+			FHUSLIF = !FHUSLIF
+			sr_SLIF.SetValueInt(FHUSLIF as int)
 			SetToggleOptionValue(FHUSLIFOID, FHUSLIF)
 		ElseIf opt == resetOID
 			if !resetting
