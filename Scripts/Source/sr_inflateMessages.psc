@@ -18,7 +18,8 @@ EndProperty
 GlobalVariable Property sr_messageLength auto
 int property msgLength
 	int Function Get()
-		return sr_messageLength.GetValueInt()
+		return 80
+;		return sr_messageLength.GetValueInt()
 	EndFunction
 EndProperty
 
