@@ -55,6 +55,7 @@ Event OnKeyDown(int kc)
 			EndIf
 			
 			If p.GetActorValuePercentage("Stamina") >= 0.3
+				SendModEvent("dhlp-Suspend")
 				int type = inflater.GetMostRecentInflationType(p);Important
 				int err = 0
 				log("Type: " + type)
@@ -125,7 +126,8 @@ Event OnKeyDown(int kc)
 				ElseIf err == 6
 					inflater.notify("$FHU_DEF_ORAL_FAIL");Anal to Oral WIP
 					inflater.DeflateFailMotion(p, 3)
-				EndIf	
+				EndIf
+				SendModEvent("dhlp-Resume")
 			Else
 				inflater.notify("$FHU_DEF_FIZZLE")
 			EndIf		
@@ -202,7 +204,6 @@ Function doPush(int type)
 	RegisterFHUUpdate(type, spermtype)
 	float dps = ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.01)
 	float currentInf
-	float startInf
 	float cum
 
 	float vagCum = GetFloatValue(p, inflater.CUM_VAGINAL)
@@ -306,10 +307,9 @@ Function doPush(int type)
 	Game.EnablePlayerControls()
 	p.RemoveFromFaction(inflater.inflaterAnimatingFaction)
 	inflater.EncumberActor(p) ; Has a 2s wait in it, do it after returning controls to keep it responsive
-	float cumcomparefloat = startInf - currentInf
-	int cumcompare = Math.Ceiling(cumcomparefloat)
+	int cumcompare = Math.Ceiling(diff)
 	
-	if sr_Cumvariationingredients.getvalue() == 1
+	if sr_Cumvariationingredients.getvalue() == 1 && cumcompare > 0
 		if type < 3
 			if spermtype == 0;human
 				p.additem(FHUHumanCum, cumcompare)
@@ -320,23 +320,23 @@ Function doPush(int type)
 			elseif spermtype == 3;spider
 				p.additem(FHUSpiderEgg, cumcompare)
 			elseif spermtype == 4;chaurus
-				if startInf > 3.0
+				if originalCum > 3.0
 					p.additem(FHULarvae, 1)
 				endif
 				p.additem(FHUChaurusEggs, cumcompare)
 			elseif spermtype == 5;spriggan
 				p.additem(SprigganSap, cumcompare)
-				if startInf > 3.0
+				if originalCum > 3.0
 					p.additem(FHUSlug, 1)
 				endif
 			elseif spermtype == 6;Stone
 				p.additem(VoidSalts, cumcompare)
-				if startInf > 3.0
+				if originalCum > 3.0
 					p.additem(SoulGemBlack, 1)
 				endif
 			elseif spermtype == 7;Ashhopper
 				p.additem(DLC2AshHopperJelly, cumcompare)
-				if startInf > 3.0
+				if originalCum > 3.0
 					p.additem(FHUAshHopperEggs, 2)
 				endif
 			else

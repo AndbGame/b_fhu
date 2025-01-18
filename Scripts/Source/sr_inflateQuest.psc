@@ -211,6 +211,7 @@ Idle[] BaboAnimsAnusEnd
 
 int animnum
 ;int MoanType
+bool dhlpSuspend
 
 Race Property ChaurusRace Auto
 Race Property ChaurusReaperRace Auto
@@ -330,12 +331,22 @@ Function maintenance()
 		RegisterForModEvent("HookOrgasmStart", "Orgasm")
 		RegisterForModEvent("HookAnimationEnd", "FHUSexlabEnd")
 		RegisterForModEvent("SexLabOrgasmSeparate", "OrgasmSeparate")
+		RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend" )
+		RegisterForModEvent("dhlp-Resume", "OnDhlpResume" )
 		RestoreActors()
 	endif
 	eventManager.Maintenance()
 	(sr_inflateExternalEventManager as sr_inflateExternalEventController).RegisterModEvent()
 	defAlias.Maintenance()
 EndFunction
+
+;dhlp event handlers
+Event OnDhlpSuspend( string eventName, string strArg, float numArg, Form sender )
+	dhlpSuspend = True
+EndEvent
+Event OnDhlpResume( string eventName, string strArg, float numArg, Form sender )
+	dhlpSuspend = False
+EndEvent
 
 event FHUSexlabEnd(int tid, bool HasPlayer)
 	Actor[] actors = sexlab.HookActors(tid)
@@ -1182,6 +1193,7 @@ Function StartLeakage(Actor akActor, int CumType, int animate, int spermtype)
 			akActor.SetDontMove(true)
 			akActor.StopTranslation()
 		EndIf
+		(akActor as ObjectReference).SetAnimationVariableInt("IsNPC", 0)
 		;PyramidUtils.SetActorCalmed(akActor, true)
 
 		;Form RightHand = akActor.GetEquippedObject(1)
@@ -1513,6 +1525,8 @@ Function StopLeakage(Actor akActor, int cumType, int spermtype)
 		EndIf
 	EndIf
 	
+	(akActor as ObjectReference).SetAnimationVariableInt("IsNPC", 1)
+	
 	;akActor.unequipItem(TongueA, abSilent=true)
 	EquiprandomTongue(akactor, false)
 	;akActor.removeItem(TongueA, 99, true)
@@ -1715,9 +1729,13 @@ State MonitoringInflation
 	EndEvent
 	
 	Event OnUpdateGameTime()
-		
 		int n = FormListCount(self, INFLATED_ACTORS) 
 		if n > 0
+			If dhlpSuspend
+				RegisterForSingleUpdateGameTime(0.5)
+				return
+			EndIf
+			SendModEvent("dhlp-Suspend")
 			float startTime = Utility.GetCurrentGameTime()
 			While n > 0
 				
@@ -1846,6 +1864,7 @@ State MonitoringInflation
 				endif
 					Utility.Wait(10.0) ; Wait for all queued threads to finish
 			EndWhile
+			SendModEvent("dhlp-Resume")
 			float duration = (Utility.GetCurrentGameTime() - startTime) * 24
 			float nextUpdate = 1.0 - duration
 			If nextUpdate < 0.1
