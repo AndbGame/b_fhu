@@ -651,7 +651,7 @@ int Function GetCreatureRaceint(Actor Target)
 		return 1
 	elseIf RaceName == "Boars" || RaceName == "BoarsAny" || RaceName == "BoarsMounted"
 		return 2
-	elseIf RaceName == "Canines"
+	elseIf RaceName == "Canines" || RaceName == "Wolf" ; https://www.loverslab.com/topic/156185-fill-her-up-baka-edition/page/57/#findComment-4238590
 		return 3
 	elseIf RaceName == "Chaurus"
 		return 4
@@ -753,7 +753,7 @@ float CreatureCumAmount = 0
 		CreatureCumAmount = GetFloatValue(sr_CreatureRaceList.getat(1) as race, CREATURERACE_CUM_AMOUNT, 0.75) * cumMult
 	elseIf RaceName == "Boars" || RaceName == "BoarsAny" || RaceName == "BoarsMounted"
 		CreatureCumAmount = GetFloatValue(sr_CreatureRaceList.getat(2) as race, CREATURERACE_CUM_AMOUNT, 0.75) * cumMult
-	elseIf RaceName == "Canines"
+	elseIf RaceName == "Canines" || RaceName == "Wolf" ; https://www.loverslab.com/topic/156185-fill-her-up-baka-edition/page/57/#findComment-4238590
 		CreatureCumAmount = GetFloatValue(sr_CreatureRaceList.getat(3) as race, CREATURERACE_CUM_AMOUNT, 0.75) * cumMult
 	elseIf RaceName == "Chaurus"
 		CreatureCumAmount = GetFloatValue(sr_CreatureRaceList.getat(4) as race, CREATURERACE_CUM_AMOUNT, 0.75) * cumMult
