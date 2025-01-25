@@ -144,6 +144,9 @@ Event OnKeyUp(int kc, float time)
 EndEvent
 
 Function doPushDeflate(String pool, Actor p, float currentInf)
+	If currentInf <= 0
+		currentInf = 0
+	EndIf
 	if config.BodyMorph && (pool == inflater.CUM_VAGINAL || pool == inflater.CUM_ANAL)
 		;inflater.SetBellyMorphValue(p, currentInf, "PregnancyBelly")
 		inflater.SetBellyMorphValue(p, currentInf, inflater.InflateMorph)
@@ -226,8 +229,8 @@ Function doPush(int type)
 
 	float originalCum = cum
 	float originalInf = currentInf
-	int deflationTick = 2
-	int tick = deflationTick
+	float deflationTick = inflater.config.BodyMorphApplyPeriod
+	float tick = deflationTick
 ;	log("Starting: inf: " + currentInf +", cum: " +cum + ", pool: " + pool)
 	While keydown && p.GetActorValuePercentage("Stamina") > 0.02 && cum > 0.02
 		float deflateAmount = 0.05 * (1.0 / inflater.config.animMult)
@@ -236,7 +239,7 @@ Function doPush(int type)
 		EndIf
 		currentInf -= 0.05*(1.0/inflater.config.animMult)
 		cum -= 0.05*(1.0/inflater.config.animMult)
-		tick -= 1
+		tick -= 0.3
 		if(tick <= 0) ;Prevents serious FPS drop due to heavy code stacks.
 			doPushDeflate(pool, p, currentInf)
 			tick = deflationTick

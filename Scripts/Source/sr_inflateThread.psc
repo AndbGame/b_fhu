@@ -246,13 +246,15 @@ Function Inflate()
 	int steps =  Math.Ceiling(tme / 0.2)
 	float step = inflationAmount / steps
 	float oralstep = inflationOralAmount / steps
-	int deflationTick = 10
-	int tick = deflationTick
+	float deflationTick = inflater.config.BodyMorphApplyPeriod
+	float tick = deflationTick
+	bool BodyMorphApplied = true
 	
 	if(inflater.config.bellyScale)
 		while(currentInflation < inflationTarget)
 			currentInflation += step
-			tick -= 1
+			BodyMorphApplied = false
+			tick -= 0.2
 			if(tick <= 0)
 				if config.BodyMorph
 					inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph)
@@ -266,25 +268,30 @@ Function Inflate()
 					inflater.SetNodeScale(akActor, inflater.BELLY_NODE, currentInflation)
 				Endif
 				tick = deflationTick
+				BodyMorphApplied = true
 			endif
 			Utility.wait(0.2)
 		EndWhile
-		if config.BodyMorph
-			inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph)
-			if inflater.InflateMorph2 != ""
-				inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph2)
-			endIf
-			if inflater.InflateMorph3 != ""
-				inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph3)
-			endif
-		Else
-			inflater.SetNodeScale(akActor, inflater.BELLY_NODE, inflationTarget)
+		if !BodyMorphApplied
+			if config.BodyMorph
+				inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph)
+				if inflater.InflateMorph2 != ""
+					inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph2)
+				endIf
+				if inflater.InflateMorph3 != ""
+					inflater.SetBellyMorphValue(akActor, inflationTarget, inflater.InflateMorph3)
+				endif
+			Else
+				inflater.SetNodeScale(akActor, inflater.BELLY_NODE, inflationTarget)
+			Endif
 		Endif
 
 		tick = deflationTick
+		BodyMorphApplied = true
 		while(currentOralInflation < oralCum)
 			currentOralInflation += oralstep
-			tick -= 1
+			tick -= 0.2
+			BodyMorphApplied = false
 			if(tick <= 0)
 				if config.BodyMorph
 					if inflater.InflateMorph4 != ""
@@ -292,11 +299,12 @@ Function Inflate()
 					endIf
 				Endif
 				tick = deflationTick
+				BodyMorphApplied = true
 			endif
 			Utility.wait(0.2)
 		EndWhile
 
-		if config.BodyMorph && inflater.InflateMorph4 != ""
+		if !BodyMorphApplied && config.BodyMorph && inflater.InflateMorph4 != ""
 			inflater.SetBellyMorphValue(akActor, oralCum, inflater.InflateMorph4)
 		endif
 	EndIf	
@@ -380,8 +388,9 @@ Function Deflate()
 	float vagCum = GetFloatValue(akActor, inflater.CUM_VAGINAL)
 	float analCum = GetFloatValue(akActor, inflater.CUM_ANAL)
 	float oralCum = GetFloatValue(akActor, inflater.CUM_ORAL)
-	int deflationTick = 10
-	int tick = deflationTick
+	float deflationTick = inflater.config.BodyMorphApplyPeriod
+	float tick = deflationTick
+	bool BodyMorphApplied = true
 	; Starting values for the callback, current values can be fetched directly
 	float startVag = vagCum
 	float startAn = analCum
@@ -452,7 +461,8 @@ Function Deflate()
 			If akActor.Is3DLoaded()
 				while currentInflation > deflateTarget
 					currentInflation -= step
-					tick -= 1
+					tick -= 0.2
+					BodyMorphApplied = false
 					if(tick <= 0)
 						if config.BodyMorph && (isAnal || isVaginal)
 							inflater.SetBellyMorphValue(akActor, currentInflation, inflater.InflateMorph)
@@ -470,26 +480,29 @@ Function Deflate()
 							inflater.SetNodeScale(akActor, inflater.BELLY_NODE, currentInflation)
 						Endif
 						tick = deflationTick
+						BodyMorphApplied = true
 					endif
 					Utility.Wait(0.2)
 				endWhile
 			EndIf
 			
-			if config.BodyMorph && (isAnal || isVaginal)
-				;inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.PregnancyBelly)
-				inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph)
-				if inflater.InflateMorph2 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph2)
-				endIf
-				if inflater.InflateMorph3 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph3)
-				endif
-			elseif config.BodyMorph && isOral
-				if inflater.InflateMorph4 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph4)
-				endif
-			Else
-				inflater.SetNodeScale(akActor, inflater.BELLY_NODE, deflateTarget)
+			if !BodyMorphApplied
+				if config.BodyMorph && (isAnal || isVaginal)
+					;inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.PregnancyBelly)
+					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph)
+					if inflater.InflateMorph2 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph2)
+					endIf
+					if inflater.InflateMorph3 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph3)
+					endif
+				elseif config.BodyMorph && isOral
+					if inflater.InflateMorph4 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph4)
+					endif
+				Else
+					inflater.SetNodeScale(akActor, inflater.BELLY_NODE, deflateTarget)
+				Endif
 			Endif
 		Else
 			Utility.wait(tme)
@@ -622,8 +635,9 @@ Function Absorb()
 	float vagCum = GetFloatValue(akActor, inflater.CUM_VAGINAL)
 	float analCum = GetFloatValue(akActor, inflater.CUM_ANAL)
 	float oralCum = GetFloatValue(akActor, inflater.CUM_ORAL)
-	int deflationTick = 5
-	int tick = deflationTick
+	float deflationTick = inflater.config.BodyMorphApplyPeriod
+	float tick = deflationTick
+	bool BodyMorphApplied = true
 	; Starting values for the callback, current values can be fetched directly
 	float startVag = vagCum
 	float startAn = analCum
@@ -690,7 +704,8 @@ Function Absorb()
 			If akActor.Is3DLoaded()
 				while currentInflation > deflateTarget
 					currentInflation -= step
-					tick -= 1
+					tick -= 0.2
+					BodyMorphApplied = false
 					if(tick <= 0)
 						if config.BodyMorph && (isAnal || isVaginal)
 							;inflater.SetBellyMorphValue(akActor, currentInflation, inflater.PregnancyBelly)
@@ -709,26 +724,29 @@ Function Absorb()
 							inflater.SetNodeScale(akActor, inflater.BELLY_NODE, currentInflation)
 						Endif
 						tick = deflationTick
+						BodyMorphApplied = true
 					endif
 					Utility.Wait(0.2)
 				endWhile
 			EndIf
 			
-			if config.BodyMorph && (isAnal || isVaginal)
-				;inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.PregnancyBelly)
-				inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph)
-				if inflater.InflateMorph2 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph2)
-				endIf
-				if inflater.InflateMorph3 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph3)
-				endif
-			elseif config.BodyMorph && isOral
-				if inflater.InflateMorph4 != ""
-					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph4)
-				endif
-			Else
-				inflater.SetNodeScale(akActor, inflater.BELLY_NODE, deflateTarget)
+			If !BodyMorphApplied
+				if config.BodyMorph && (isAnal || isVaginal)
+					;inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.PregnancyBelly)
+					inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph)
+					if inflater.InflateMorph2 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph2)
+					endIf
+					if inflater.InflateMorph3 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph3)
+					endif
+				elseif config.BodyMorph && isOral
+					if inflater.InflateMorph4 != ""
+						inflater.SetBellyMorphValue(akActor, deflateTarget, inflater.InflateMorph4)
+					endif
+				Else
+					inflater.SetNodeScale(akActor, inflater.BELLY_NODE, deflateTarget)
+				Endif
 			Endif
 		Else
 			Utility.wait(tme)

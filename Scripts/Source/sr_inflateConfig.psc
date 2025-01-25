@@ -177,6 +177,10 @@ bool property FHUMorphSLIF2 auto hidden
 bool property FHUMorphSLIF3 auto hidden
 bool property FHUMorphSLIF4 auto hidden
 
+int BodyMorphApplyPeriodOID
+float property BodyMorphApplyPeriod auto hidden
+float property BodyMorphApplyPeriodDefault = 1.0 autoreadonly hidden
+
 int BodyMorphOID
 bool property BodyMorph = true Auto hidden
 bool property BodyMorphdefault = true Auto hidden
@@ -313,6 +317,7 @@ Function SetDefaults()
 	addRaceKey = addRaceKeyDefault
 	animDeflate = animDeflateDefault
 	animMult = animMultDefault
+	BodyMorphApplyPeriod = BodyMorphApplyPeriodDefault
 	encumber = encumberDefault
 	enabled = true
 	femaleEnabled = true
@@ -331,7 +336,12 @@ Function SetDefaults()
 	events = eventsDefault
 	bellyScale = bellyScaleDefault
 	BodyMorph = true
-	FHUSLIF = true
+	if SLIF_Installed
+		sr_SLIF.setvalue(1)
+		FHUSLIF = true
+	else
+		FHUSLIF = false
+	endif
 	MoanSound = true
 	sr_MoanSound.setvalue(1)
 	SexlabMoanSound = true
@@ -502,7 +512,12 @@ Event OnPageReset(String page)
 				FHUMorphSLIF4OID = AddToggleOption("$FHU_MORPHSLIF4", false, OPTION_FLAG_DISABLED)
 			endif
 		endif
-		FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF)
+		if SLIF_Installed
+			FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF)
+		else
+			FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF, OPTION_FLAG_DISABLED)
+		endif
+		BodyMorphApplyPeriodOID = AddSliderOption("$FHU_BODYMORPH_APPLY_PERIOD", BodyMorphApplyPeriod, "{1}")
 		addRaceKeyOID = AddKeyMapOption("$FHU_ADD_RACE", addRaceKey, OPTION_FLAG_WITH_UNMAP)
 		consolePrintOID = AddToggleOption("$FHU_CONSOLE_PRINT", consolePrint)
 		loggingOID = AddToggleOption("$FHU_LOGGING", logging)
@@ -688,6 +703,11 @@ State settings
 			SetSliderDialogDefaultValue(animMultDefault)
 			SetSliderDialogRange(1.0, 20.0)
 			SetSliderDialogInterval(1.0)
+		ElseIf opt == BodyMorphApplyPeriodOID
+			SetSliderDialogStartValue(BodyMorphApplyPeriod)
+			SetSliderDialogDefaultValue(BodyMorphApplyPeriodDefault)
+			SetSliderDialogRange(0.2, 2.0)
+			SetSliderDialogInterval(0.2)
 		ElseIf opt == cumMultOID
 			SetSliderDialogStartValue(inflater.cumMult)
 			SetSliderDialogDefaultValue(1.00)
@@ -723,6 +743,10 @@ State settings
 			animMult = val
 			SetSliderOptionValue(opt, animMult, "{1}")
 			inflater.log("Animation duration multiplier set to: " + animMult)
+		ElseIf opt == BodyMorphApplyPeriodOID
+			BodyMorphApplyPeriod = val
+			SetSliderOptionValue(opt, BodyMorphApplyPeriod, "{1}")
+			inflater.log("BodyMorph Apply Period set to: " + animMult)
 		ElseIf opt == cumMultOID
 			inflater.cumMult = val
 			SetSliderOptionValue(opt, val, "{2}")
@@ -1010,6 +1034,8 @@ State settings
 			SetInfoText("$FHU_STATUS_MESSAGES_CHANCE_HELP")
 		ElseIf opt == animMultOID
 			SetInfoText("$FHU_ANIM_MULT_HELP")
+		ElseIf opt == BodyMorphApplyPeriodOID
+			SetInfoText("$FHU_BODYMORPH_APPLY_PERIOD_HELP")
 		ElseIf opt == bellyScaleOID
 			SetInfoText("$FHU_VISUAL_BELLY_HELP")
 		ElseIf opt == BodyMorphOID
@@ -1318,6 +1344,9 @@ Event OnOptionDefault(int opt)
 	ElseIf opt == animMultOID
 		animMult = animMultDefault
 		SetSliderOptionValue(opt, animMult, "{1}")
+	ElseIf opt == BodyMorphApplyPeriodOID
+		BodyMorphApplyPeriod = BodyMorphApplyPeriodDefault
+		SetSliderOptionValue(opt, BodyMorphApplyPeriod, "{1}")
 	ElseIf opt == encumberOID
 		encumber = encumberDefault
 		SetToggleOptionValue(encumberOID, encumber)
