@@ -657,7 +657,11 @@ Event OnPageReset(String page)
 				while iinjector > 0
 					iinjector -= 1
 					Actor injector = StorageUtil.FormListGet(a, "sr.inflater.injector", iinjector) as Actor
-					AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+					If injector
+						AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+					Else
+						AddTextOption("Unknown", "Unknown")
+					EndIf
 				endwhile
 
 			EndIf
@@ -667,7 +671,12 @@ Event OnPageReset(String page)
 		int iinjector = sr_InjectorFormlist.getsize()
 		while iinjector > 0
 			iinjector -= 1
-			AddTextOption((sr_InjectorFormlist.getat(iinjector) as actor).GetLeveledActorBase().GetName(), DefineSex(sr_InjectorFormlist.getat(iinjector) as actor))
+			Actor injector = sr_InjectorFormlist.getat(iinjector) as actor
+			If injector
+				AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+			Else
+				AddTextOption("Unknown", "Unknown")
+			EndIf
 		EndWhile
 	ElseIf page == pages[3] ; Human Cum Amounts
 		GoToState("humancumamount")
