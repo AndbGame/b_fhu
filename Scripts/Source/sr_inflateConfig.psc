@@ -177,6 +177,10 @@ bool property FHUMorphSLIF2 auto hidden
 bool property FHUMorphSLIF3 auto hidden
 bool property FHUMorphSLIF4 auto hidden
 
+int BodyMorphApplyPeriodOID
+float property BodyMorphApplyPeriod auto hidden
+float property BodyMorphApplyPeriodDefault = 1.0 autoreadonly hidden
+
 int BodyMorphOID
 bool property BodyMorph = true Auto hidden
 bool property BodyMorphdefault = true Auto hidden
@@ -250,6 +254,10 @@ bool BeeingFemale_Installed
 bool SLIF_Installed
 bool Property FHUSLIF = true Auto hidden
 
+Faction Property zadAnimatingFaction auto 
+Faction Property DefeatFaction auto 
+Faction Property UDMinigameFaction auto 
+Faction Property BathinginSkyrimFaction auto 
 
 bool property addedEvents = true autoreadonly hidden
 int runCount = 0
@@ -302,6 +310,23 @@ Function VerifyMods()
 	Else
 		SLIF_Installed = false
 	Endif
+	
+	If Game.GetModByName("Devious Devices - Integration.esm") != 255
+		zadAnimatingFaction		= Game.GetFormFromFile(0x00029567, "Devious Devices - Integration.esm") as Faction
+	EndIf
+
+	If Game.GetModByName("SexLabDefeat.esp") != 255
+		DefeatFaction			= Game.GetFormFromFile(0x00001D92, "SexLabDefeat.esp") as Faction
+	EndIf
+
+	If Game.GetModByName("UnforgivingDevices.esp") != 255
+		UDMinigameFaction		= Game.GetFormFromFile(0x00150DA3, "UnforgivingDevices.esp") as Faction
+	EndIf
+
+	If Game.GetModByName("Bathing in Skyrim.esp") != 255
+		; TODO:
+		; BathinginSkyrimFaction = 
+	EndIf
 
 EndFunction
 
@@ -313,6 +338,7 @@ Function SetDefaults()
 	addRaceKey = addRaceKeyDefault
 	animDeflate = animDeflateDefault
 	animMult = animMultDefault
+	BodyMorphApplyPeriod = BodyMorphApplyPeriodDefault
 	encumber = encumberDefault
 	enabled = true
 	femaleEnabled = true
@@ -320,15 +346,21 @@ Function SetDefaults()
 	statusMsg = statusMsgDefault
 	npcComments = npcCommentsDefault
 	followerComments = followerCommentsDefault
+	If followerComments
+		sr_followerCommentChance.SetValueInt(26)
+	EndIf
 	eventManager.interval = eventIntervalDefault
 	SendeventChance = SendeventChanceDefault
+	sr_SendingSpermDataChance.setvalue(SendeventChance)
 	SendeventCriterion = SendeventCriterionDefault
+	sr_SendingSpermDataCriterion.setvalue(SendeventCriterion)
 	events = eventsDefault
 	bellyScale = bellyScaleDefault
 	BodyMorph = true
-	FHUSLIF = true
 	MoanSound = true
+	sr_MoanSound.setvalue(1)
 	SexlabMoanSound = true
+	sr_SexlabMoanSound.setvalue(1)
 	Deflatechance = DeflatechanceDefault
 	sr_ExpelFaliure.setvalue(Deflatechance)
 	VariousCum = VariousCumDefault
@@ -381,7 +413,8 @@ Function PageReset()
 EndFunction
 
 Event OnVersionUpdate(int newVersion)
-	If newVersion != currentVersion
+	If newVersion != CurrentVersion
+		VerifyMods() ; Need know installed mods for setup
 		ModName = "Fill her up"
 		bool monitoring = inflater.GetState() == "MonitoringInflation"
 		inflater.stop()
@@ -404,6 +437,12 @@ Event OnVersionUpdate(int newVersion)
 
 		If currentVersion == 0
 			SetDefaultCumAmounts()
+			if SLIF_Installed
+				sr_SLIF.setvalue(1)
+				FHUSLIF = true
+			else
+				FHUSLIF = false
+			endif
 		EndIf
 		InitCumMagicEffects()
 		sr_inflatedCommentChance.SetValueInt(26)
@@ -416,7 +455,7 @@ Event OnVersionUpdate(int newVersion)
 		EndIf
 		Debug.Notification("Fill Her Up " + inflater.GetVersionString() + " initialized.")
 	EndIf
-	debug.messagebox("Fill Her Up Update")
+	;debug.Notification("Fill Her Up Update from " + CurrentVersion + " to " + newVersion)
 EndEvent
 
 
@@ -495,7 +534,12 @@ Event OnPageReset(String page)
 				FHUMorphSLIF4OID = AddToggleOption("$FHU_MORPHSLIF4", false, OPTION_FLAG_DISABLED)
 			endif
 		endif
-		FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF)
+		if SLIF_Installed
+			FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF)
+		else
+			FHUSLIFOID = AddToggleOption("$FHU_SLIF", FHUSLIF, OPTION_FLAG_DISABLED)
+		endif
+		BodyMorphApplyPeriodOID = AddSliderOption("$FHU_BODYMORPH_APPLY_PERIOD", BodyMorphApplyPeriod, "{1}")
 		addRaceKeyOID = AddKeyMapOption("$FHU_ADD_RACE", addRaceKey, OPTION_FLAG_WITH_UNMAP)
 		consolePrintOID = AddToggleOption("$FHU_CONSOLE_PRINT", consolePrint)
 		loggingOID = AddToggleOption("$FHU_LOGGING", logging)
@@ -606,7 +650,20 @@ Event OnPageReset(String page)
 					AddTextOption("$FHU_VAG_AMOUNT", StringUtil.SubString(inflater.GetVaginalCum(a), 0, 5))
 				EndIf
 				AddTextOption("$FHU_AN_AMOUNT", StringUtil.SubString(inflater.GetAnalCum(a), 0, 5))
+				AddTextOption("$FHU_OR_AMOUNT", StringUtil.SubString(inflater.GetOralCum(a), 0, 5))
 				AddTextOption("$FHU_TOTAL_INF", StringUtil.SubString(inflater.GetInflation(a),0,5))
+				
+				int iinjector = StorageUtil.FormListCount(a, "sr.inflater.injector")
+				while iinjector > 0
+					iinjector -= 1
+					Actor injector = StorageUtil.FormListGet(a, "sr.inflater.injector", iinjector) as Actor
+					If injector
+						AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+					Else
+						AddTextOption("Unknown", "Unknown")
+					EndIf
+				endwhile
+
 			EndIf
 		EndWhile
 		SetCursorPosition(1)
@@ -614,7 +671,12 @@ Event OnPageReset(String page)
 		int iinjector = sr_InjectorFormlist.getsize()
 		while iinjector > 0
 			iinjector -= 1
-			AddTextOption((sr_InjectorFormlist.getat(iinjector) as actor).GetLeveledActorBase().GetName(), DefineSex(sr_InjectorFormlist.getat(iinjector) as actor))
+			Actor injector = sr_InjectorFormlist.getat(iinjector) as actor
+			If injector
+				AddTextOption(injector.GetLeveledActorBase().GetName(), DefineSex(injector))
+			Else
+				AddTextOption("Unknown", "Unknown")
+			EndIf
 		EndWhile
 	ElseIf page == pages[3] ; Human Cum Amounts
 		GoToState("humancumamount")
@@ -672,6 +734,11 @@ State settings
 			SetSliderDialogDefaultValue(animMultDefault)
 			SetSliderDialogRange(1.0, 20.0)
 			SetSliderDialogInterval(1.0)
+		ElseIf opt == BodyMorphApplyPeriodOID
+			SetSliderDialogStartValue(BodyMorphApplyPeriod)
+			SetSliderDialogDefaultValue(BodyMorphApplyPeriodDefault)
+			SetSliderDialogRange(0.2, 2.0)
+			SetSliderDialogInterval(0.2)
 		ElseIf opt == cumMultOID
 			SetSliderDialogStartValue(inflater.cumMult)
 			SetSliderDialogDefaultValue(1.00)
@@ -707,6 +774,10 @@ State settings
 			animMult = val
 			SetSliderOptionValue(opt, animMult, "{1}")
 			inflater.log("Animation duration multiplier set to: " + animMult)
+		ElseIf opt == BodyMorphApplyPeriodOID
+			BodyMorphApplyPeriod = val
+			SetSliderOptionValue(opt, BodyMorphApplyPeriod, "{1}")
+			inflater.log("BodyMorph Apply Period set to: " + animMult)
 		ElseIf opt == cumMultOID
 			inflater.cumMult = val
 			SetSliderOptionValue(opt, val, "{2}")
@@ -787,8 +858,8 @@ State settings
 			SetToggleOptionValue(loggingOID, logging)
 			inflater.log("Logging set to: " + logging)
 		ElseIf opt == FHUSLIFOID
-			FHUSLIF != FHUSLIF
-			sr_SLIF.setvalue(FHUSLIF as int)
+			FHUSLIF = !FHUSLIF
+			sr_SLIF.SetValueInt(FHUSLIF as int)
 			SetToggleOptionValue(FHUSLIFOID, FHUSLIF)
 		ElseIf opt == resetOID
 			if !resetting
@@ -821,6 +892,7 @@ State settings
 			Else
 				inflater.UnregisterForModEvent("SexLabOrgasmSeparate")
 				inflater.UnregisterForModEvent("HookOrgasmStart")
+				;inflater.UnregisterForModEvent("Sexlab_AddCum") ; Not have source :(
 				inflater.ResetActors() ; Eh, same thing couple of lines lower with a confirmation...
 				StorageUtil.UnsetIntValue(Game.GetPlayer(), "CI_CumInflation_ON")
 				SetOptionFlags(femaleEnabledOID, OPTION_FLAG_DISABLED)
@@ -994,6 +1066,8 @@ State settings
 			SetInfoText("$FHU_STATUS_MESSAGES_CHANCE_HELP")
 		ElseIf opt == animMultOID
 			SetInfoText("$FHU_ANIM_MULT_HELP")
+		ElseIf opt == BodyMorphApplyPeriodOID
+			SetInfoText("$FHU_BODYMORPH_APPLY_PERIOD_HELP")
 		ElseIf opt == bellyScaleOID
 			SetInfoText("$FHU_VISUAL_BELLY_HELP")
 		ElseIf opt == BodyMorphOID
@@ -1302,6 +1376,9 @@ Event OnOptionDefault(int opt)
 	ElseIf opt == animMultOID
 		animMult = animMultDefault
 		SetSliderOptionValue(opt, animMult, "{1}")
+	ElseIf opt == BodyMorphApplyPeriodOID
+		BodyMorphApplyPeriod = BodyMorphApplyPeriodDefault
+		SetSliderOptionValue(opt, BodyMorphApplyPeriod, "{1}")
 	ElseIf opt == encumberOID
 		encumber = encumberDefault
 		SetToggleOptionValue(encumberOID, encumber)

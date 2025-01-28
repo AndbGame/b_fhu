@@ -27,8 +27,8 @@ Function DeviceMenuRemoveWithoutKey()
 			libs.PlayerRef.DamageAV("Magicka", 50)
 			libs.Notify("You flood the "+deviceInventory.GetName()+" with arcane energies, but everything you cast gets absorbed by the " + deviceName + ".", messageBox=true)
 		endif
-	elseif deviceRemoveOption == 2 ; Brute force
-		DeviceMenuBruteForce()
+	elseif deviceRemoveOption == 2 ; Cut Device
+		EscapeAttemptCut()
 	elseif deviceRemoveOption == 3
         DeviceMenuCarryOn()
     endif
