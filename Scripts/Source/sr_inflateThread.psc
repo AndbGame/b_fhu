@@ -8,7 +8,6 @@ bool inf = true
 bool isAnal = false
 bool isVaginal = false
 bool isOral = false
-float OralcumAmount = 0.0
 float cumAmount = 0.0
 float tme = 0.0
 Bool bAnimController
@@ -41,7 +40,6 @@ Function SetUp(bool inflate, int poolMask, float amount, float time = 3.0, Strin
 	EndIf
 	
 	cumAmount = amount
-	OralcumAmount = amount * 0.75
 	tme = time
 	cb = callback
 	animate = DoAnimate
@@ -135,9 +133,13 @@ Event StartAbsorption()
 EndEvent
 
 Function Inflate()
+	If cumAmount == 0
+		return
+	EndIf
+
 	Actor akActor = GetActorReference()
 
-	log("Inflating, anal: " + isAnal + ", vaginal: " + isVaginal + ", cum amount: " + cumAmount)
+	log("Inflating, anal: " + isAnal + ", vaginal: " + isVaginal + ", oral: " + isOral + ", cum amount: " + cumAmount)
 	if inflater.GetState() == ""
 		inflater.GoToState("MonitoringInflation")
 	EndIf
@@ -162,8 +164,21 @@ Function Inflate()
 		maxInflation *= inflater.BURST_MULT
 	EndIf
 	
+	float OralcumAmount = 0
+	if(isOral)
+		If isAnal && isVaginal
+			OralcumAmount = cumAmount/3
+			cumAmount = cumAmount - OralcumAmount
+		ElseIf isAnal || isVaginal
+			OralcumAmount = cumAmount/2
+			cumAmount = cumAmount - OralcumAmount
+		Else
+			OralcumAmount = cumAmount
+		EndIf
+		OralcumAmount = OralcumAmount * 0.75
+	EndIf
+
 	If isAnal && isVaginal
-		log("both - halve the cum amount")
 		cumAmount /= 2
 	EndIf
 	float AnaltoOral = 0
@@ -348,18 +363,12 @@ Function Inflate()
 		; off into infinity as they have more and more (ill-advised) sex.
 	;EndIf
 	
-	If akActor == inflater.player;No Oral state is needed.
-		If (isAnal && isVaginal)
+	If akActor == inflater.player;No Oral state is needed. Oral is Wip
+		If isVaginal
 			inflater.SendPlayerCumUpdate(vagCum, false)
+		EndIf
+		If isAnal
 			inflater.SendPlayerCumUpdate(analCum, true)
-		Else
-			float amount = 0.0
-			If isAnal
-				amount = analCum
-			ElseIf isVaginal
-				amount = vagCum
-			EndIf
-			inflater.SendPlayerCumUpdate(amount, isAnal)
 		EndIf
 	EndIf
 EndFunction
@@ -607,16 +616,13 @@ Function Deflate()
 		ModEvent.Send(eid)
 	EndIf
 	
-	If akActor == inflater.player
-		float amount = 0.0
-		If isAnal
-			amount = analCum
-		elseif isVaginal
-			amount = vagCum
-		else
-			amount = oralCum
+	If akActor == inflater.player;No Oral state is needed. Oral is Wip
+		If isVaginal
+			inflater.SendPlayerCumUpdate(vagCum, false)
 		EndIf
-		inflater.SendPlayerCumUpdate(amount, isAnal)
+		If isAnal
+			inflater.SendPlayerCumUpdate(analCum, true)
+		EndIf
 	EndIf
 	
 	; Update arousal
@@ -848,16 +854,13 @@ Function Absorb()
 		ModEvent.Send(eid)
 	EndIf
 	
-	If akActor == inflater.player
-		float amount = 0.0
-		If isAnal
-			amount = analCum
-		elseif isVaginal
-			amount = vagCum
-		else
-			amount = oralCum
+	If akActor == inflater.player;No Oral state is needed. Oral is Wip
+		If isVaginal
+			inflater.SendPlayerCumUpdate(vagCum, false)
 		EndIf
-		inflater.SendPlayerCumUpdate(amount, isAnal)
+		If isAnal
+			inflater.SendPlayerCumUpdate(analCum, true)
+		EndIf
 	EndIf
 	
 	; Update arousal

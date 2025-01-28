@@ -254,6 +254,10 @@ bool BeeingFemale_Installed
 bool SLIF_Installed
 bool Property FHUSLIF = true Auto hidden
 
+Faction Property zadAnimatingFaction auto 
+Faction Property DefeatFaction auto 
+Faction Property UDMinigameFaction auto 
+Faction Property BathinginSkyrimFaction auto 
 
 bool property addedEvents = true autoreadonly hidden
 int runCount = 0
@@ -306,6 +310,23 @@ Function VerifyMods()
 	Else
 		SLIF_Installed = false
 	Endif
+	
+	If Game.GetModByName("Devious Devices - Integration.esm") != 255
+		zadAnimatingFaction		= Game.GetFormFromFile(0x00029567, "Devious Devices - Integration.esm") as Faction
+	EndIf
+
+	If Game.GetModByName("SexLabDefeat.esp") != 255
+		DefeatFaction			= Game.GetFormFromFile(0x00001D92, "SexLabDefeat.esp") as Faction
+	EndIf
+
+	If Game.GetModByName("UnforgivingDevices.esp") != 255
+		UDMinigameFaction		= Game.GetFormFromFile(0x00150DA3, "UnforgivingDevices.esp") as Faction
+	EndIf
+
+	If Game.GetModByName("Bathing in Skyrim.esp") != 255
+		; TODO:
+		; BathinginSkyrimFaction = 
+	EndIf
 
 EndFunction
 
@@ -336,12 +357,6 @@ Function SetDefaults()
 	events = eventsDefault
 	bellyScale = bellyScaleDefault
 	BodyMorph = true
-	if SLIF_Installed
-		sr_SLIF.setvalue(1)
-		FHUSLIF = true
-	else
-		FHUSLIF = false
-	endif
 	MoanSound = true
 	sr_MoanSound.setvalue(1)
 	SexlabMoanSound = true
@@ -398,7 +413,8 @@ Function PageReset()
 EndFunction
 
 Event OnVersionUpdate(int newVersion)
-	If newVersion != currentVersion
+	If newVersion != CurrentVersion
+		VerifyMods() ; Need know installed mods for setup
 		ModName = "Fill her up"
 		bool monitoring = inflater.GetState() == "MonitoringInflation"
 		inflater.stop()
@@ -421,6 +437,12 @@ Event OnVersionUpdate(int newVersion)
 
 		If currentVersion == 0
 			SetDefaultCumAmounts()
+			if SLIF_Installed
+				sr_SLIF.setvalue(1)
+				FHUSLIF = true
+			else
+				FHUSLIF = false
+			endif
 		EndIf
 		InitCumMagicEffects()
 		sr_inflatedCommentChance.SetValueInt(26)
@@ -433,7 +455,7 @@ Event OnVersionUpdate(int newVersion)
 		EndIf
 		Debug.Notification("Fill Her Up " + inflater.GetVersionString() + " initialized.")
 	EndIf
-	;debug.messagebox("Fill Her Up Update")
+	;debug.Notification("Fill Her Up Update from " + CurrentVersion + " to " + newVersion)
 EndEvent
 
 
@@ -861,6 +883,7 @@ State settings
 			Else
 				inflater.UnregisterForModEvent("SexLabOrgasmSeparate")
 				inflater.UnregisterForModEvent("HookOrgasmStart")
+				;inflater.UnregisterForModEvent("Sexlab_AddCum") ; Not have source :(
 				inflater.ResetActors() ; Eh, same thing couple of lines lower with a confirmation...
 				StorageUtil.UnsetIntValue(Game.GetPlayer(), "CI_CumInflation_ON")
 				SetOptionFlags(femaleEnabledOID, OPTION_FLAG_DISABLED)

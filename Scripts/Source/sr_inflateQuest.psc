@@ -78,9 +78,6 @@ Spell Property encumber25 Auto
 
 SexLabFramework Property sexlab auto
 Faction Property slAnimatingFaction auto
-Faction Property zadAnimatingFaction auto 
-Faction Property DefeatFaction auto 
-Faction Property UDMinigameFaction auto 
 
 Package Property stayStillPackage auto
 
@@ -312,15 +309,6 @@ Function VersionUpdate()
 		zad_DeviousBelt			= Game.GetFormFromFile(0x00003330, "Devious Devices - Assets.esm") as Keyword
 		zad_PermitAnal			= Game.GetFormFromFile(0x0000FACA, "Devious Devices - Assets.esm") as Keyword
 	EndIf
-	If Game.GetModByName("Devious Devices - Integration.esm") != 255
-		zadAnimatingFaction		= Game.GetFormFromFile(0x00029567, "Devious Devices - Integration.esm") as Faction
-	EndIf
-	If Game.GetModByName("SexLabDefeat.esp") != 255
-		DefeatFaction			= Game.GetFormFromFile(0x00001D92, "SexLabDefeat.esp") as Faction
-	EndIf
-	If Game.GetModByName("UnforgivingDevices.esp") != 255
-		UDMinigameFaction		= Game.GetFormFromFile(0x00150DA3, "UnforgivingDevices.esp") as Faction
-	EndIf
 	SetIntValue(Player, "CI_CumInflation_ON", 1)
 	eventManager.StartEvents()
 EndFunction
@@ -331,6 +319,7 @@ Function maintenance()
 		RegisterForModEvent("HookOrgasmStart", "Orgasm")
 		RegisterForModEvent("HookAnimationEnd", "FHUSexlabEnd")
 		RegisterForModEvent("SexLabOrgasmSeparate", "OrgasmSeparate")
+		;RegisterForModEvent("Sexlab_AddCum", "AddCum") Not have source :(
 		RegisterForModEvent("dhlp-Suspend", "OnDhlpSuspend" )
 		RegisterForModEvent("dhlp-Resume", "OnDhlpResume" )
 		RestoreActors()
@@ -414,15 +403,12 @@ Event OrgasmSeparate(Form ActorRef, Int Thread)
 			currentPool = Math.LogicalOr(currentPool, ORAL)
 			;Debug.notification("Oral " + currentPool as int)
 		EndIf
-
-		If sexlab.Threads[Thread].hasPlayer
-			dialogue.modMod(30)
-			currentActors = actors
-			currentType = currentPool
-		EndIf
 		
 		String callback = ""
 		int i = actors.length
+		Actor[] cumSource = new Actor[1]
+		cumSource[0] = akActor
+
 		while i > 0
 			i -= 1
 			int cumSpot = anim.GetCum(i)
@@ -432,18 +418,21 @@ Event OrgasmSeparate(Form ActorRef, Int Thread)
 				If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1; && cumSpot != 2
 					; only inflate if the actor is female (or male pretending to be female!) and the animation position has cum effect set for something else than oral only
 					If actors[i] == player && sr_CumEffectsEnabled.GetValueInt() > 0
+						dialogue.modMod(30)
+						currentActors = cumSource
+						currentType = currentPool
 						RegisterForModEvent("fhu.playerInflated", "PlayerInflationDone")
 						callback = "fhu.playerInflated"
 					Else
 						callback = ""
 					EndIf
-						int tid = QueueActor(actors[i], true, currentPool, GetCumAmountForActor(actors[i], actors), 3.0, callback)
-						;sr_InjectorFormlist.addform(actors[i])
-						if tid < 0
-							warn("Inflaton slots full, skipping " + actors[i].GetLeveledActorBase().GetName() + "!")
-						Else
-							log(actors[i].GetLeveledActorBase().GetName() + " slotted to thread " + tid +".")
-						EndIf
+					int tid = QueueActor(actors[i], true, currentPool, GetCumAmountForActor(actors[i], cumSource), 3.0, callback)
+					;sr_InjectorFormlist.addform(actors[i])
+					if tid < 0
+						warn("Inflaton slots full, skipping " + actors[i].GetLeveledActorBase().GetName() + "!")
+					Else
+						log(actors[i].GetLeveledActorBase().GetName() + " slotted to thread " + tid +".")
+					EndIf
 				EndIf
 			EndIf
 		EndWhile
@@ -470,12 +459,6 @@ Event Orgasm(int thread, bool hasPlayer)
 			currentPool = Math.LogicalOr(currentPool, ORAL)
 			;Debug.notification("Oral " + currentPool as int)
 		EndIf
-
-		If hasPlayer
-			dialogue.modMod(30)
-			currentActors = actors
-			currentType = currentPool
-		EndIf
 		
 		String callback = ""
 		int i = actors.length
@@ -488,6 +471,9 @@ Event Orgasm(int thread, bool hasPlayer)
 			If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) ;&& cumSpot != -1
 				; only inflate if the actor is female (or male pretending to be female!) and the animation position has cum effect set for something else than oral only
 				If actors[i] == player && sr_CumEffectsEnabled.GetValueInt() > 0
+					dialogue.modMod(30)
+					currentActors = actors
+					currentType = currentPool
 					RegisterForModEvent("fhu.playerInflated", "PlayerInflationDone")
 					callback = "fhu.playerInflated"
 				Else
@@ -1971,6 +1957,7 @@ Function ResetActors(bool force = false)
 	RemoveFaction(player)
 	SendPlayerCumUpdate(0.0, true)
 	SendPlayerCumUpdate(0.0, false)
+	sr_InjectorFormlist.revert()
 	
 	notify("$FHU_ACTORS_RESET")
 EndFunction
@@ -2060,9 +2047,9 @@ Function PlayerInflationDone(Form a, float startVag, float startAn, float startO
 	while n > 0
 		n -= 1
 		If currentActors[n] != none && currentActors[n] != player && currentActors[n].haskeyword(ActorTypeNPC)
-			ApplyCumEffect(currentActors[n].GetLeveledActorBase().GetRace(), currentType, startVag, startAn)
+			ApplyCumEffect(currentActors[n].GetLeveledActorBase().GetRace(), currentType, startVag, startAn, startOr)
 		Elseif currentActors[n] != none && currentActors[n] != player && !currentActors[n].haskeyword(ActorTypeNPC)
-			ApplyCreatureCumEffect(sr_CreatureRaceList.getat(GetCreatureRaceint(currentActors[n])) as race, currentType, startVag, startAn)
+			ApplyCreatureCumEffect(sr_CreatureRaceList.getat(GetCreatureRaceint(currentActors[n])) as race, currentType, startVag, startAn, startOr)
 		EndIf
 
 	EndWhile
@@ -2070,74 +2057,86 @@ Function PlayerInflationDone(Form a, float startVag, float startAn, float startO
 	currentActors = new Actor[1]
 EndFunction
 
-Function ApplyCreatureCumEffect(Race rce, int pool, float startVag, float startAn)
+Function ApplyCreatureCumEffect(Race rce, int pool, float startVag, float startAn, float startOr)
 	if pool <= 0 
 		warn("Tried to apply cum effect without a pool.")
 		return
 	EndIf
-	log("Trying to apply cum effect for " + rce.GetName())
+	log("Trying to apply cum effect for " + rce.GetName() + "; startVag=" + startVag + "; startAn=" + startAn + "; startOr=" + startOr)
 	int n = FormListCount(rce, CREATURERACE_CUM_EFFECTS)
 	log("Found " + n + " effects.")
 	if n < 1
 		return
 	EndIf
-	Spell theSpell = FormListGet(rce, CREATURERACE_CUM_EFFECTS, Utility.RandomInt(0, n  - 1)) as Spell
-	log("Applying " + theSpell.GetName())
 	
-	bool isAnal
+	bool isVaginal = false
+	bool isAnal = false
+	bool isOral = false
 	if(Math.LogicalAnd(pool, ANAL) && !Math.LogicalAnd(pool, VAGINAL))
 		isAnal = true
 	elseIf(!Math.LogicalAnd(pool, ANAL) && Math.LogicalAnd(pool, VAGINAL))
-		isAnal = false
-	Else ; both
+		isVaginal = true
+	ElseIf (Math.LogicalAnd(pool, ANAL) || Math.LogicalAnd(pool, VAGINAL)); both
 		isAnal = Utility.RandomInt(0,1) == 1
+		isVaginal = !isAnal
 	EndIf
-	player.AddSpell(theSpell, abVerbose = false)
-	int evnt = ModEvent.Create("fhu.playerCumEffectStart")
-	If isAnal
-		ModEvent.pushFloat(evnt, startAn)
-	Else
-		ModEvent.pushFloat(evnt, startVag)
+
+	If isAnal || isVaginal ;No Oral state is needed. Oral is Wip
+		Spell theSpell = FormListGet(rce, CREATURERACE_CUM_EFFECTS, Utility.RandomInt(0, n  - 1)) as Spell
+		log("Applying " + theSpell.GetName())
+		player.AddSpell(theSpell, abVerbose = false)
+		int evnt = ModEvent.Create("fhu.playerCumEffectStart")
+		If isAnal
+			ModEvent.pushFloat(evnt, startAn)
+		Else
+			ModEvent.pushFloat(evnt, startVag)
+		EndIf
+		ModEvent.pushBool(evnt, isAnal)
+		ModEvent.pushForm(evnt, theSpell) 
+		Utility.Wait(0.75)
+		ModEvent.Send(evnt)
 	EndIf
-	ModEvent.pushBool(evnt, isAnal)
-	ModEvent.pushForm(evnt, theSpell) 
-	Utility.Wait(0.75)
-	ModEvent.Send(evnt)
 EndFunction
 
-Function ApplyCumEffect(Race rce, int pool, float startVag, float startAn)
+Function ApplyCumEffect(Race rce, int pool, float startVag, float startAn, float startOr)
 	if pool <= 0 
 		warn("Tried to apply cum effect without a pool.")
 		return
 	EndIf
-	log("Trying to apply cum effect for " + rce.GetName())
+	log("Trying to apply cum effect for " + rce.GetName() + "; startVag=" + startVag + "; startAn=" + startAn + "; startOr=" + startOr)
 	int n = FormListCount(rce, RACE_CUM_EFFECTS)
 	log("Found " + n + " effects.")
 	if n < 1
 		return
 	EndIf
-	Spell theSpell = FormListGet(rce, RACE_CUM_EFFECTS, Utility.RandomInt(0, n  - 1)) as Spell
-	log("Applying " + theSpell.GetName())
 	
-	bool isAnal
+	bool isVaginal = false
+	bool isAnal = false
+	bool isOral = false
 	if(Math.LogicalAnd(pool, ANAL) && !Math.LogicalAnd(pool, VAGINAL))
 		isAnal = true
 	elseIf(!Math.LogicalAnd(pool, ANAL) && Math.LogicalAnd(pool, VAGINAL))
-		isAnal = false
-	Else ; both
+		isVaginal = true
+	ElseIf (Math.LogicalAnd(pool, ANAL) || Math.LogicalAnd(pool, VAGINAL)); both
 		isAnal = Utility.RandomInt(0,1) == 1
+		isVaginal = !isAnal
 	EndIf
-	player.AddSpell(theSpell, abVerbose = false)
-	int evnt = ModEvent.Create("fhu.playerCumEffectStart")
-	If isAnal
-		ModEvent.pushFloat(evnt, startAn)
-	Else
-		ModEvent.pushFloat(evnt, startVag)
+	
+	If isAnal || isVaginal ;No Oral state is needed. Oral is Wip
+		Spell theSpell = FormListGet(rce, RACE_CUM_EFFECTS, Utility.RandomInt(0, n  - 1)) as Spell
+		log("Applying " + theSpell.GetName())
+		player.AddSpell(theSpell, abVerbose = false)
+		int evnt = ModEvent.Create("fhu.playerCumEffectStart")
+		If isAnal
+			ModEvent.pushFloat(evnt, startAn)
+		Else
+			ModEvent.pushFloat(evnt, startVag)
+		EndIf
+		ModEvent.pushBool(evnt, isAnal)
+		ModEvent.pushForm(evnt, theSpell) 
+		Utility.Wait(0.75)
+		ModEvent.Send(evnt)
 	EndIf
-	ModEvent.pushBool(evnt, isAnal)
-	ModEvent.pushForm(evnt, theSpell) 
-	Utility.Wait(0.75)
-	ModEvent.Send(evnt)
 EndFunction
 
 Function SendPlayerCumUpdate(float current, bool isAnal)
@@ -2694,6 +2693,26 @@ Function SLIF_unregisterMorph(Actor akActor, String MorphName)
 ;Null
 EndFunction
 
-bool Function isAnimating(Actor akActor)
-	return akActor.IsOnMount() || akActor.GetCurrentScene() != none || (akActor.GetSitState() != 0) || (slAnimatingFaction && akActor.IsInFaction(slAnimatingFaction) ) || (zadAnimatingFaction && akActor.IsInFaction(zadAnimatingFaction) ) || (DefeatFaction && akActor.IsInFaction(DefeatFaction) ) || (UDMinigameFaction && akActor.IsInFaction(UDMinigameFaction) )
+bool Function isAnimating(Actor akActor) ; TODO too many dependency
+	If (akActor.IsOnMount() || akActor.GetCurrentScene() != none || akActor.GetSitState() != 0)
+		return true
+	EndIf
+	If (slAnimatingFaction && akActor.IsInFaction(slAnimatingFaction) ) 
+		return true
+	EndIf
+	If (config.zadAnimatingFaction && akActor.IsInFaction(config.zadAnimatingFaction) ) 
+		return true
+	EndIf
+	If (config.DefeatFaction && akActor.IsInFaction(config.DefeatFaction) ) 
+		return true
+	EndIf
+	If (config.UDMinigameFaction && akActor.IsInFaction(config.UDMinigameFaction) )
+		return true
+	EndIf
+	; TODO: Not a faction
+	;If (config.BathinginSkyrimFaction && akActor.IsInFaction(config.BathinginSkyrimFaction) )
+	;	return true
+	;EndIf
+
+	return false
 EndFunction
