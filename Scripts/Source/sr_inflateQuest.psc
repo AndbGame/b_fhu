@@ -6,6 +6,8 @@ sr_inflateConfig Property config auto
 sr_infDeflateAbility Property defAlias Auto
 sr_inflateMessages Property dialogue auto 
 sr_infEventManager Property eventManager auto
+sr_infPlayer Property infplayer auto
+ 
 Quest Property sr_inflateExternalEventManager Auto
 GlobalVariable Property sr_debug auto
 Keyword Property sr_WhyWontYouDispel Auto
@@ -260,6 +262,7 @@ race property sr_MimicRace auto
 Bool Property bPlayerImpregnated auto hidden
 Bool Property bPlayerImpregnatedAnal auto hidden
 
+Bool Property bDeflateAnimation auto hidden
 MagicEffect Property sr_ExpelCumMGEF Auto
 
 Sound Property sr_FHUEggCrackingMarker Auto
@@ -269,7 +272,9 @@ Referencealias[] property PregnantActors auto
 
 Actor[] currentActors
 int currentType = 0
+Bool Property RubAnimation Auto hidden
 
+Actor Property TempActor Auto Hidden
 Function BaboAnimsSet()
 
 BaboAnimsOral = new idle[1]
@@ -312,7 +317,7 @@ BaboAnimsAnusEnd[3] = BaboSpermAnalOut04End
 EndFunction
 
 Function EggHatchEffect(actor akactor)
-	if !akactor.isinfaction(inflaterAnimatingFaction)
+	if !akactor.isinfaction(inflaterAnimatingFaction) && Game.IsMovementControlsEnabled() && RubAnimation 
 		akactor.playidle(BaboStomachRubbing)
 	endif
 	sr_FHUEggCrackingMarker.play(akactor)
@@ -320,7 +325,7 @@ Function EggHatchEffect(actor akactor)
 EndFunction
 
 Function RubStomach(actor akactor)
-	if !akactor.isinfaction(inflaterAnimatingFaction)
+	if !akactor.isinfaction(inflaterAnimatingFaction) && Game.IsMovementControlsEnabled() && RubAnimation
 		akactor.playidle(BaboStomachRubbing)
 	endif
 	sr_FHUStomachRumblingMarker.play(akactor)
@@ -377,6 +382,7 @@ Function maintenance()
 	eventManager.Maintenance()
 	(sr_inflateExternalEventManager as sr_inflateExternalEventController).RegisterModEvent()
 	defAlias.Maintenance()
+	bDeflateAnimation = false
 EndFunction
 
 ;dhlp event handlers
@@ -565,6 +571,15 @@ Event Orgasm(int thread, bool hasPlayer)
 		InflateQueued()
 	EndIf
 EndEvent
+
+;/ Event onUpdate() /;
+	;/ MfgConsoleFunc.ResetPhonemeModifier(TempActor) /;
+	;/ if btongueout /;
+		;/ EquiprandomTongue(TempActor, false) /;
+	;/ endif /;
+	;/ EquipArmor(TempActor) /;
+;/ EndEvent /;
+
 
 bool Function UpdateFHUmoan(ObjectReference aksource, int cumType, int spermtype)
 	Actor DeflateActor = aksource as Actor
@@ -1655,14 +1670,25 @@ Function DeflateFailMotion(actor akactor, int CumType, bool btongue = true, int 
 	endif
 	
 	FHUmoanSoundEffect(akactor as objectreference, 3, CumType)
-	if akActor.WaitForAnimationEvent("IdleForceDefaultState")
-		;Debug.notification("DeflateFailMotion End Debug Text")
-		MfgConsoleFunc.ResetPhonemeModifier(akActor)
-		if btongueout
-			EquiprandomTongue(akactor, false)
-		endif
-		EquipArmor(akactor)
+	TempActor = akActor
+	;RegisterForSingleUpdate(10.0)
+	Utility.wait(11.0)
+	MfgConsoleFunc.ResetPhonemeModifier(akActor)
+	if btongueout
+		equiprandomtongue(akactor, false)
 	endif
+	EquipArmor(akactor)
+	;infplayer.RegisterForSingleUpdate(15.0); Just in case when the actor is interrupted and the animation stops 
+	;if akActor.WaitForAnimationEvent("IdleForceDefaultState") || EmergencySwitch || bDeflateAnimation ; WaitForAnimationEvent is wonky
+	;/ if EmergencySwitch || bDeflateAnimation /;
+		;/ EmergencySwitch = false /;
+		;/ bDeflateAnimation = false /;
+		;/ ;Debug.notification("DeflateFailMotion End Debug Text") /;
+		;/ MfgConsoleFunc.ResetPhonemeModifier(akActor) /;
+		;/ if btongueout /;
+			;/ EquiprandomTongue(akactor, false) /;
+		;/ endif /;
+		;/ EquipArmor(akactor) /;
 EndFunction
 
 Function MouthOpen(actor akActor, int randomi)
@@ -1974,7 +2000,51 @@ State MonitoringInflation
 		log("Starting inflation monitor")
 		RegisterForSingleUpdateGameTime(1.0)
 	EndEvent
-	
+
+	function RemoveSpermFromActor(actor akactor, int type = 1, String ReserveRace = "", bool bEvent = false)
+		If !(akactor == player)
+			return
+		endif
+		int i
+		if type == 1
+			i = sr_InjectorFormlist.getsize()
+		elseif type == 2
+			i = FormListCount(akactor,  "sr.inflater.analinjector")
+		endif
+		
+		if i > 0
+			int randomi = Utility.randomint(0, i - 1)
+			actor injector
+			if type == 1
+				injector = sr_InjectorFormlist.getat(randomi) as Actor
+			elseif type == 2
+				injector = FormListGet(akactor, "sr.inflater.analinjector", randomi) as Actor
+			endif
+
+			int actori = GetCreatureRaceint(injector)
+			if ReserveRace == "Chaurus" && (actori >= 4 && actori <= 6)
+				if type == 1
+					if !akactor.isinfaction(sr_Impregnated)
+						bPlayerImpregnated = true
+						akactor.addtofaction(sr_Impregnated)
+					endif
+				elseif type == 2
+					if !akactor.isinfaction(sr_Impregnatedanal)
+						bPlayerImpregnatedAnal = true
+						akactor.addtofaction(sr_Impregnatedanal)
+					endif
+				endif
+				return
+			elseif ReserveRace == "Chaurus" && (actori < 4 || actori > 6)
+				if type == 1
+					sr_InjectorFormlist.RemoveAddedForm(injector)
+				elseif type == 2
+					FormListRemove(akactor, "sr.inflater.analinjector", injector)
+				endif
+			endif
+		endif
+	endfunction
+
 	Event OnUpdateGameTime()
 		int n = FormListCount(self, INFLATED_ACTORS) 
 		if n > 0
@@ -2157,7 +2227,6 @@ int Function GetOralDeflateChance(Actor akActor)
 	return chance
 EndFunction
 
-
 Function ResetActors(bool force = false)
 	GoToState("")
 	int n = FormListCount(self, INFLATED_ACTORS) 
@@ -2330,7 +2399,6 @@ EndFunction
 Function RemoveOralFaction(Actor a)
 	a.RemoveFromFaction(SR_InflateOralFaction)
 EndFunction
-
 
 Function PlayerInflationDone(Form a, float startVag, float startAn, float startOr)
 	if a != player
@@ -2556,7 +2624,19 @@ Function EquipArmor(Actor target)
 		FormListRemoveAt(target, "sr.inflater.unequipped", i)
 	endwhile
 	FormListClear(target, "sr.inflater.unequipped")
-	i = FormListCount(target, "sr.inflater.equipped_leak")
+	RemoveLeak(target)
+	;/ i = FormListCount(target, "sr.inflater.equipped_leak") /;
+	;/ while(i > 0) /;
+		;/ i -= 1 /;
+		;/ Armor leak = FormListGet(target, "sr.inflater.equipped_leak", i) as Armor /;
+		;/ target.unequipItem(leak, abSilent=true) /;
+		;/ target.removeItem(leak, 99, true) /;
+	;/ endwhile /;
+	;/ FormListClear(target, "sr.inflater.equipped_leak") /;
+EndFunction
+
+Function RemoveLeak(Actor target)
+	int i = FormListCount(target, "sr.inflater.equipped_leak")
 	while(i > 0)
 		i -= 1
 		Armor leak = FormListGet(target, "sr.inflater.equipped_leak", i) as Armor
