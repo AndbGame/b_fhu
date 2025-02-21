@@ -40,6 +40,7 @@ EndEvent
 
 Function Maintenance()
 	UnregisterForAllKeys()
+	spermout = false
 	If config.defKey >= 0
 		RegisterForKey(config.defKey)
 	EndIf
@@ -56,16 +57,15 @@ EndEvent
 
 Function SpermOutStart()
 keydown = true
+Actor p = GetActorReference()
+If p.IsInFaction(inflater.inflaterAnimatingFaction)
+	log("Already animating!")
+	keydown = false
+	return
+EndIf
 Utility.Wait(0.4)
 If keydown && !spermout
 	spermout = true;To prevent trigger from continual press
-	Actor p = GetActorReference()
-			
-	If p.IsInFaction(inflater.inflaterAnimatingFaction)
-		log("Already animating!")
-		return
-	EndIf
-	
 	If p.GetActorValuePercentage("Stamina") >= 0.3
 		SendModEvent("dhlp-Suspend")
 		int type = inflater.GetMostRecentInflationType(p);Important
@@ -441,4 +441,3 @@ EndFunction
 Function log(String msg)
 	inflater.log("[DefAbility]: " + msg)
 EndFunction
-

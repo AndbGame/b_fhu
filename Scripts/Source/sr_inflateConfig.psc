@@ -145,9 +145,11 @@ int property SendeventCriterionDefault = 50 autoreadonly hidden
 
 bool events 
 bool property eventsImpregnation auto hidden
+bool property eventAnimation auto hidden
 bool property eventsDefault = true autoreadonly hidden
 int eventsOID
 int eventsImpregnationOID
+int eventAnimationOID
 int[] eventOIDs
 int[] ToggleSlotID
 int[] SlotValue
@@ -550,7 +552,7 @@ Event OnPageReset(String page)
 		addRaceKeyOID = AddKeyMapOption("$FHU_ADD_RACE", addRaceKey, OPTION_FLAG_WITH_UNMAP)
 		consolePrintOID = AddToggleOption("$FHU_CONSOLE_PRINT", consolePrint)
 		loggingOID = AddToggleOption("$FHU_LOGGING", logging)
-		gamepadOID = AddToggleOption("$FHU_SLIF", bgamepad)
+		gamepadOID = AddToggleOption("$FHU_GAMEPAD", bgamepad)
 		resetOID = AddTextOption("$FHU_RESET_ACTORS", "$FHU_RESET")
 		resetquestOID = AddTextOption("$FHU_RESET_QUEST", "$FHU_RESETQUEST")
 		AddEmptyOption()
@@ -567,6 +569,7 @@ Event OnPageReset(String page)
 		eventsOID = AddToggleOption("$FHU_EVENTS", events)
 		eventIntervalOID = AddSliderOption("$FHU_EVENT_INTERVAL", eventManager.interval, "{2} hours")
 		eventsImpregnationOID = AddToggleOption("$FHU_EVENT_IMPREGNATION", eventsImpregnation)
+		eventAnimationOID = AddToggleOption("$FHU_EVENT_ANIMATION", eventAnimation)
 		eventSendeventChanceOID = AddSliderOption("$FHU_SENDEVENT_CHANCE", SendeventChance, "{0}%")
 		eventSendeventCriterionOID = AddSliderOption("$FHU_SENDEVENT_CRITERION", SendeventCriterion, "{0}%")
 		
@@ -1303,11 +1306,10 @@ State events
 		elseIf opt == eventsImpregnationOID
 			eventsImpregnation = !eventsImpregnation
 			SetToggleOptionValue(eventsImpregnationOID, eventsImpregnation)
-			;If eventsImpregnation
-			;	eventManager.StartEvents()
-			;Else
-			;	eventManager.StopEvents()
-			;EndIf
+		elseIf opt == eventAnimationOID
+			eventAnimation = !eventAnimation
+			inflater.RubAnimation = eventAnimation
+			SetToggleOptionValue(eventAnimationOID, eventAnimation)
 		Else
 			int idx = ToggleSlotID.Find(opt)
 			if (idx >= 0)
@@ -1384,7 +1386,9 @@ State events
 		ElseIf opt == OnEventSpermNPCOID
 			SetInfoText("$FHU_OnEventSpermNPC_EFFECT_HELP")
 		ElseIf opt == eventsImpregnationOID
-			SetInfoText("$FHU_EVENT_IMPREGNATION_HELP")
+			SetInfoText("$FHU_EVENT_IMPREGNATION_HELP")	
+		ElseIf opt == eventAnimationOID
+			SetInfoText("$FHU_EVENT_ANIMATION_HELP")
 		elseif opt >= ToggleSlotID[0] && opt <= ToggleSlotID[31]
 			SetInfoText("$FHU_TOGGLESLOT_HELP")
 		Else
