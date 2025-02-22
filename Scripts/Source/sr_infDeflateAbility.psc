@@ -98,40 +98,38 @@ If keydown && !spermout
 		elseif type == 3
 			int gagged = inflater.isGagged(p)
 			if gagged == 0;Not Gagged
-				; TODO: Sorry, do not understand idea - some mess, need analyze. For now - simple enable oral deflation
 				err = 0
-				;WIP: When it crosses the capacity limit, you vomit. If not, you feel like vomiting but vomit nothing.
-				;type = inflater.GetMoreInflationType(p, type)
-				;if type > 0
-				;	If plugged < 3
-				;		If type == plugged ; one plug and it's blocking
-				;			If type == 1 ; determine which message to show
-				;				err = 1;vaginal
-				;			Else
-				;				err = 2;anal
-				;			EndIf
-				;		EndIf
-				;		
-				;		If err == 1 && inflater.GetAnalCum(p) > 0 && plugged != 2; switch pools if possible and clear the error
-				;			type = 2
-				;			err = 0
-				;			log("Vaginal plug, switching to anal deflation")
-				;		ElseIf err == 2 && inflater.GetVaginalCum(p) > 0 && plugged != 1
-				;			type = 1
-				;			err = 0
-				;			log("Anal plug, switching to vaginal deflation")
-				;		EndIf
-				;	else
-				;		err = 7
-				;	endif
-				;else
-				;	err = 10; no cum
-				;endif
 			elseif gagged == 1;Gagged but permitoral
 				;No mouthcontrol
 				err = 0
 			else;Gagged
+				;WIP: When it crosses the capacity limit, you vomit. If not, you feel like vomiting but vomit nothing.
 				err = 7
+				type = inflater.GetMoreInflationType(p, type)
+				
+				if type > 0
+					err = 0
+					If plugged < 3
+						If type == plugged ; one plug and it's blocking
+							If type == 1 ; determine which message to show
+								err = 1;vaginal
+							Else
+								err = 2;anal
+							EndIf
+						EndIf
+						
+						If err == 1 && inflater.GetAnalCum(p) > 0 && plugged != 2; switch pools if possible and clear the error
+							type = 2
+							err = 0
+							log("Vaginal plug, switching to anal deflation")
+						ElseIf err == 2 && inflater.GetVaginalCum(p) > 0 && plugged != 1
+							type = 1
+							err = 0
+							log("Anal plug, switching to vaginal deflation")
+						EndIf
+					endif
+				endif
+				
 			endif
 
 		else
@@ -189,7 +187,8 @@ If keydown && !spermout
 			inflater.notify("$FHU_DEF_REFUSE")
 			inflater.DeflateFailMotion(p, 5, false, 0)
 		ElseIf err == 10 ; no cum
-			;
+			; maybe not need
+			inflater.DeflateFailMotion(p, 4, false)
 		Else ; other
 			;
 		EndIf
