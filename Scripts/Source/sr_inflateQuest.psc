@@ -468,20 +468,24 @@ Event OrgasmSeparate(Form ActorRef, Int Thread)
 	
 	Actor[] actors = sexlab.HookActors(thread)
 	sslBaseAnimation anim = sexlab.HookAnimation(thread)
-
+	log(akActor + " OrgasmSeparate")
 	If anim.hasTag("Vaginal") || anim.hasTag("Oral") || anim.hasTag("Anal")
 		If ( !sexlab.config.allowFFCum && sexlab.MaleCount(actors) < 1 && sexlab.CreatureCount(actors) < 1)
+			log(akActor + " OrgasmSeparate not allowed by config")
 			return 
 		EndIf
 		
 		int currentPool = 0
 		If anim.hasTag("Vaginal")
+			log(akActor + " OrgasmSeparate Vaginal")
 			currentPool = Math.LogicalOr(currentPool, VAGINAL)
 		EndIf
 		If anim.hasTag("Anal")
+			log(akActor + " OrgasmSeparate Anal")
 			currentPool = Math.LogicalOr(currentPool, ANAL)
 		EndIf
 		If anim.hasTag("Oral")
+			log(akActor + " OrgasmSeparate Oral")
 			currentPool = Math.LogicalOr(currentPool, ORAL)
 			;Debug.notification("Oral " + currentPool as int)
 		EndIf
@@ -497,6 +501,7 @@ Event OrgasmSeparate(Form ActorRef, Int Thread)
 			int actorGender = sexlab.GetGender(actors[i])
 		;	log(anim.name + " - cumSpot for position " + i + ": " + cumSpot)
 			If akActor != actors[i]
+				log(akActor + " OrgasmSeparate to " + actors[i])
 				If ((actorGender == 1 && config.femaleEnabled) || (actorGender == 0 && config.maleEnabled)) && cumSpot != -1; && cumSpot != 2
 					; only inflate if the actor is female (or male pretending to be female!) and the animation position has cum effect set for something else than oral only
 					If actors[i] == player && sr_CumEffectsEnabled.GetValueInt() > 0
