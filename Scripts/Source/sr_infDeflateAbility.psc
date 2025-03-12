@@ -63,11 +63,11 @@ If p.IsInFaction(inflater.inflaterAnimatingFaction)
 	keydown = false
 	return
 EndIf
-Utility.Wait(0.4)
+Utility.Wait(0.1)
 If keydown && !spermout
 	spermout = true;To prevent trigger from continual press
 	If p.GetActorValuePercentage("Stamina") >= 0.3
-		SendModEvent("dhlp-Suspend")
+		SendModEvent("dhlp-Suspend") ; do not forgot about `dhlp-Resume` before exit this `If` and function
 		int type = inflater.GetMostRecentInflationType(p);Important
 		int err = 0
 		int plugged = inflater.isPlugged(p)
@@ -98,9 +98,17 @@ If keydown && !spermout
 		elseif type == 3
 			int gagged = inflater.isGagged(p)
 			if gagged == 0;Not Gagged
+				err = 0
+			elseif gagged == 1;Gagged but permitoral
+				;No mouthcontrol
+				err = 0
+			else;Gagged
 				;WIP: When it crosses the capacity limit, you vomit. If not, you feel like vomiting but vomit nothing.
+				err = 7
 				type = inflater.GetMoreInflationType(p, type)
+				
 				if type > 0
+					err = 0
 					If plugged < 3
 						If type == plugged ; one plug and it's blocking
 							If type == 1 ; determine which message to show
@@ -119,29 +127,26 @@ If keydown && !spermout
 							err = 0
 							log("Anal plug, switching to vaginal deflation")
 						EndIf
-					else
-						err = 7
 					endif
-				else
-					return; no cum
 				endif
-			elseif gagged == 1;Gagged but permitoral
-				;No mouthcontrol
-				err = 0
-			else;Gagged
-				err = 7
 			endif
 
+		else
+			err = 10; no cum
 		EndIf
+
+		int spermtype = 0
 		
-		p.DamageActorValue("Stamina", ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.4))				
-		If p.HasSpell(inflater.sr_inflateBurstSpell)
-			err = 5
-			log("Bursting, can't deflate")
+		If err != 10 ; If has cum
+			p.DamageActorValue("Stamina", ((p.GetActorValue("Stamina") / p.GetActorValuePercentage("Stamina")) * 0.4))				
+			If p.HasSpell(inflater.sr_inflateBurstSpell)
+				err = 5
+				log("Bursting, can't deflate")
+			EndIf
+			spermtype = inflater.GetSpermLastActor(p, type)
 		EndIf
-		int spermtype = inflater.GetSpermLastActor(p, type)
-		
-		If (Utility.RandomInt(0, 99) < sr_ExpelFaliure.getvalue() as int) && err == 0
+			
+		If err == 0 && (Utility.RandomInt(0, 99) < sr_ExpelFaliure.getvalue() as int)
 			If type > 0 && type < 3
 				err = 4
 			elseif type == 3
@@ -149,8 +154,6 @@ If keydown && !spermout
 			endif
 		;	log("RandomErrorNotEnoughRandom")
 		EndIf
-		
-		
 
 		If err == 0
 		;	log("Pushing: " + type)
@@ -182,6 +185,12 @@ If keydown && !spermout
 		ElseIf err == 9;expel fail vaginal wip - scanner
 			inflater.notify("$FHU_DEF_REFUSE")
 			inflater.DeflateFailMotion(p, 5, false, 0)
+		ElseIf err == 10 ; no cum
+			; maybe not need
+			inflater.notify("$FHU_DEF_NOCUM")
+			inflater.DeflateFailMotion(p, 4, false)
+		Else ; other
+			;
 		EndIf
 		SendModEvent("dhlp-Resume")
 	Else

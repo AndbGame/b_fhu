@@ -721,6 +721,7 @@ int Function GetCreatureRaceint(Actor Target)
     EndIf
     
 	String RaceName = sslCreatureAnimationSlots.GetRaceKey(Target.GetLeveledActorBase().GetRace())
+	log(RaceName + " get registered in Fill Her Up")
     If RaceName == "Ashhoppers"
 		return 0
 	elseIf RaceName == "Bears"
@@ -3057,30 +3058,22 @@ EndFunction
 String Property FHU_KEY = "sr_FillHerUp.esp" autoreadonly
  
 Function SetBellyMorphValue(Actor akActor, float value, string MorphName)
+	if MorphName == ""
+		return
+	endif
+	
 	If value != 0.0
 		if sr_SLIF.getvalue() == 1
 			if MorphName == InflateMorph && config.FHUMorphSLIF
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-			endif
-			
-			if MorphName == InflateMorph2 && config.FHUMorphSLIF2
+			elseif MorphName == InflateMorph2 && config.FHUMorphSLIF2
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-			endif
-			
-			if MorphName == InflateMorph3 && config.FHUMorphSLIF3
+			elseif MorphName == InflateMorph3 && config.FHUMorphSLIF3
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-			endif
-
-			if MorphName == InflateMorph4 && config.FHUMorphSLIF4
+			elseif MorphName == InflateMorph4 && config.FHUMorphSLIF4
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
+			;else
+			;	NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
 			endif
 		else
 			NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
@@ -3089,32 +3082,16 @@ Function SetBellyMorphValue(Actor akActor, float value, string MorphName)
 		if sr_SLIF.getvalue() == 1
 			if MorphName == InflateMorph && config.FHUMorphSLIF
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
-			endif
-			
-			if MorphName == InflateMorph2 && config.FHUMorphSLIF2
+			elseif MorphName == InflateMorph2 && config.FHUMorphSLIF2
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
-			endif
-			
-			if MorphName == InflateMorph3 && config.FHUMorphSLIF3
+			elseif MorphName == InflateMorph3 && config.FHUMorphSLIF3
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
-				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
-				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
-			endif
-			
-			if MorphName == InflateMorph4 && config.FHUMorphSLIF4
+			elseif MorphName == InflateMorph4 && config.FHUMorphSLIF4
 				SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value/10, FHU_KEY)
-			else
+			else;just in case
 				NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
 				NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
 			endif
-			
 		else
 			NiOverride.SetBodyMorph(akActor, MorphName, FHU_KEY, value/10)
 			NiOverride.ClearBodyMorph(akActor, MorphName, FHU_KEY)
@@ -3125,6 +3102,8 @@ Function SetBellyMorphValue(Actor akActor, float value, string MorphName)
 	ModEvent.PushForm(eid, akActor)
 	ModEvent.Send(eid)
 EndFunction
+
+
 
 Function SLIF_morph(Actor akActor, String MorphName, float value)
 	SLIF_Morph.morph(akActor, "Fill Her Up", morphName, value, FHU_KEY)
