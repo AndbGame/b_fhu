@@ -1804,7 +1804,9 @@ Function StopLeakage(Actor akActor, int cumType, int spermtype)
 		EndIf
 	EndIf
 
-	(akActor as ObjectReference).SetAnimationVariableInt("IsNPC", 1)
+	If anim > 0
+		(akActor as ObjectReference).SetAnimationVariableInt("IsNPC", 1)
+	EndIf
 	
 	;akActor.unequipItem(TongueA, abSilent=true)
 	EquiprandomTongue(akactor, false)
