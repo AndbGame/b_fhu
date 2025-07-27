@@ -151,7 +151,8 @@ Event PurityMonitor(int threadID, bool hasPlayer)
 	Actor[] actors = SexLab.HookActors(threadId)
 	actor pl = Game.GetPlayer()
 	int pli = actors.Find(pl)
-	int cumSpot = anim.AccessPosition(pli, 1)
+	;int cumSpot = anim.AccessPosition(pli, 1)
+	int cumSpot = anim.GetCum(pli)
 	If ( ( anim.HasTag("vaginal") && ( blocked == 1 || blocked == 3 ) ) || (anim.HasTag("anal") && ( blocked == 2 || blocked == 3 ) ) ) && cumSpot != -1 && cumSpot != 2
 
 		int i = actors.length
