@@ -1795,11 +1795,11 @@ Function StopLeakage(Actor akActor, int cumType, int spermtype)
 		EndIf
 	Else
 		MfgConsoleFunc.ResetPhonemeModifier(akActor);Player expression is controlled here(OnKeyUp)
-		ActorUtil.RemovePackageOverride(akActor, stayStillPackage)
-		akActor.EvaluatePackage()
-		akActor.SetRestrained(False)
-		akActor.SetDontMove(False)
 		If anim > 0
+			ActorUtil.RemovePackageOverride(akActor, stayStillPackage)
+			akActor.EvaluatePackage()
+			akActor.SetRestrained(False)
+			akActor.SetDontMove(False)
 			Debug.SendAnimationEvent(akActor as ObjectReference,"IdleForceDefaultState")
 		EndIf
 	EndIf
